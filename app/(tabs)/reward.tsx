@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import { router } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
-  Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,215 +12,211 @@ import {
   View,
 } from "react-native";
 
-export default function RewardScreen() {
-  const [points, setPoints] = useState(120);
-  const [tasksDone, setTasksDone] = useState(18);
-  const [onTime, setOnTime] = useState(15);
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-  const user = {
-    name: "Talha Ahmed",
-    role: "Field Manager",
-    image: "https://i.pravatar.cc/300",
-  };
+interface TaskStats {
+  total: number;
+  completed: number;
+  onTime: number;
+  streak: number;
+  pending: number;
+  accepted: number;
+  rejected: number;
+}
 
-  const level =
-    points > 200 ? "Gold" : points > 100 ? "Silver" : "Bronze";
+interface Badge {
+  id: string;
+  icon: string;
+  title: string;
+  desc: string;
+  earned: boolean;
+  color: string;
+}
 
-  const claimReward = () => {
-    if (points >= 100) {
-      Alert.alert("🎉 Reward Claimed", "You received Rs 1000 bonus!");
-      setPoints(points - 100);
-    } else {
-      Alert.alert("Not enough points");
+// ─── Config ───────────────────────────────────────────────────────────────────
+
+const CURRENT_USER_ID = "69d8eb0649052d70b41e4b03";
+const API_BASE = "https://fyp-coral.vercel.app/api/tasks";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const fetchStats = async (userId: string): Promise<TaskStats> => {
+  const res = await fetch(`${API_BASE}?userId=${userId}`);
+  const data = await res.json();
+  
+  if (!res.ok) throw new Error(data.error || "Failed to fetch");
+
+  // FIX: Access "taskData" specifically as per your API structure
+  const tasks: any[] = data.taskData || [];
+
+  const total = tasks.length;
+  const completed = tasks.filter((t) => t.status?.toLowerCase() === "completed").length;
+  const pending = tasks.filter((t) => t.status?.toLowerCase() === "pending").length;
+  const accepted = tasks.filter((t) => t.status?.toLowerCase() === "accepted").length;
+  const rejected = tasks.filter((t) => t.status?.toLowerCase() === "rejected").length;
+
+  // Streak logic: counting consecutive completed tasks from the newest entries
+  let streak = 0;
+  const sorted = [...tasks].sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+  
+  for (const t of sorted) {
+    if (t.status?.toLowerCase() === "completed") streak++;
+    else if (t.status?.toLowerCase() !== "completed") break;
+  }
+
+  return { total, completed, onTime: completed, streak, pending, accepted, rejected };
+};
+
+const buildBadges = (stats: TaskStats): Badge[] => [
+  { id: "first", icon: "ribbon-outline", title: "First Step", desc: "Complete your first task", earned: stats.completed >= 1, color: "#3B82F6" },
+  { id: "trio", icon: "star-outline", title: "Hat Trick", desc: "Complete 3 tasks", earned: stats.completed >= 3, color: "#F59E0B" },
+  { id: "five", icon: "trophy-outline", title: "High Five", desc: "Complete 5 tasks", earned: stats.completed >= 5, color: "#8B5CF6" },
+  { id: "streak3", icon: "flame-outline", title: "On Fire", desc: "3 tasks streak", earned: stats.streak >= 3, color: "#EF4444" },
+];
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+const StatCard = ({ icon, label, value, color }: any) => (
+  <View style={sc.statCard}>
+    <View style={[sc.iconCircle, { backgroundColor: color + "20" }]}>
+      <Ionicons name={icon} size={20} color={color} />
+    </View>
+    <Text style={sc.statValue}>{value}</Text>
+    <Text style={sc.statLabel}>{label}</Text>
+  </View>
+);
+
+const BadgeCard = ({ badge }: { badge: Badge }) => (
+  <View style={[sc.badgeCard, !badge.earned && sc.badgeCardDim]}>
+    <View style={[sc.badgeIcon, { backgroundColor: badge.earned ? badge.color + "20" : "#1E3A5F" }]}>
+      <Ionicons name={badge.icon as any} size={24} color={badge.earned ? badge.color : "#475569"} />
+    </View>
+    <Text style={[sc.badgeTitle, !badge.earned && { color: "#475569" }]}>{badge.title}</Text>
+    <Text style={sc.badgeDesc} numberOfLines={2}>{badge.desc}</Text>
+    <View style={[sc.earnedPill, { backgroundColor: badge.earned ? badge.color + "20" : "#0A2540" }]}>
+      <Text style={[sc.earnedTxt, { color: badge.earned ? badge.color : "#475569" }]}>
+        {badge.earned ? "Earned" : "Locked"}
+      </Text>
+    </View>
+  </View>
+);
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+
+export default function Rewards() {
+  const [stats, setStats] = useState<TaskStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const s = await fetchStats(CURRENT_USER_ID);
+      setStats(s);
+    } catch (e: any) {
+      Alert.alert("Error", "Could not load stats");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const badges = stats ? buildBadges(stats) : [];
+  const earnedCount = badges.filter((b) => b.earned).length;
+  const completionRate = stats && stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+
+  if (loading) return (
+    <View style={[sc.screen, sc.center]}>
+      <ActivityIndicator color="#3B82F6" size="large" />
+    </View>
+  );
 
   return (
-    <ScrollView style={{ backgroundColor: "#0A2540" }}>
-      
-      {/* 🔥 HEADER */}
-      <LinearGradient colors={["#0A2540", "#1E3A5F"]} style={styles.header}>
-        <Image source={{ uri: user.image }} style={styles.image} />
-
-        <Text style={styles.name}>{user.name}</Text>
-        <Text style={styles.role}>{user.role}</Text>
-
-        <View style={styles.levelBox}>
-          <Text style={styles.levelText}>{level} Level</Text>
-        </View>
-      </LinearGradient>
-
-      {/* 📊 STATS */}
-      <View style={styles.stats}>
-        <View style={styles.statBox}>
-          <Text style={styles.statValue}>{tasksDone}</Text>
-          <Text style={styles.statLabel}>Tasks Done</Text>
-        </View>
-
-        <View style={styles.statBox}>
-          <Text style={styles.statValue}>{onTime}</Text>
-          <Text style={styles.statLabel}>On Time</Text>
-        </View>
-
-        <View style={styles.statBox}>
-          <Text style={styles.statValue}>{points}</Text>
-          <Text style={styles.statLabel}>Points</Text>
-        </View>
+    <View style={sc.screen}>
+      <View style={sc.header}>
+        <TouchableOpacity style={sc.backBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={20} color="#fff" />
+        </TouchableOpacity>
+        <Text style={sc.heading}>Performance</Text>
+        <View style={{ width: 36 }} />
       </View>
 
-      {/* 🏆 REWARDS CARD */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Earned Rewards</Text>
-
-        <View style={styles.rewardItem}>
-          <Ionicons name="trophy" size={20} color="#FFD700" />
-          <Text style={styles.rewardText}>Top Performer</Text>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => {setRefreshing(true); load();}} tintColor="#fff" />}
+      >
+        {/* Progress Overview */}
+        <View style={sc.heroCard}>
+          <View style={sc.heroLeft}>
+            <Text style={sc.heroLabel}>Total Rewards</Text>
+            <Text style={sc.heroValue}>{earnedCount} / {badges.length}</Text>
+            <View style={sc.progressBar}>
+              <View style={[sc.progressFill, { width: `${(earnedCount / badges.length) * 100}%` }]} />
+            </View>
+          </View>
+          <View style={sc.heroDivider} />
+          <View style={sc.heroRight}>
+            <Ionicons name="flame" size={30} color="#F59E0B" />
+            <Text style={sc.streakNum}>{stats?.streak}</Text>
+            <Text style={sc.streakLabel}>Streak</Text>
+          </View>
         </View>
 
-        <View style={styles.rewardItem}>
-          <Ionicons name="flash" size={20} color="#22c55e" />
-          <Text style={styles.rewardText}>Fast Completion Bonus</Text>
+        {/* Stats Grid */}
+        <Text style={sc.sectionTitle}>Task Summary</Text>
+        <View style={sc.statsGrid}>
+          <StatCard icon="list" label="Total" value={stats?.total} color="#3B82F6" />
+          <StatCard icon="checkmark-circle" label="Done" value={stats?.completed} color="#22C55E" />
+          <StatCard icon="hourglass" label="Pending" value={stats?.pending} color="#F59E0B" />
+          <StatCard icon="map" label="Accepted" value={stats?.accepted} color="#8B5CF6" />
+          <StatCard icon="close-circle" label="Rejected" value={stats?.rejected} color="#EF4444" />
+          <StatCard icon="trending-up" label="Rate" value={`${completionRate}%`} color="#EC4899" />
         </View>
 
-        <View style={styles.rewardItem}>
-          <Ionicons name="star" size={20} color="#3B82F6" />
-          <Text style={styles.rewardText}>5 Tasks Streak</Text>
+        {/* Badges Section */}
+        <Text style={sc.sectionTitle}>Achievements</Text>
+        <View style={sc.badgesGrid}>
+          {badges.map((b) => <BadgeCard key={b.id} badge={b} />)}
         </View>
-      </View>
-
-      {/* 🎯 PROGRESS */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Performance Progress</Text>
-
-        <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${points}%` }]} />
-        </View>
-
-        <Text style={styles.progressText}>
-          {points}% towards next reward
-        </Text>
-      </View>
-
-      {/* 🎁 CLAIM BUTTON */}
-      <TouchableOpacity style={styles.claimBtn} onPress={claimReward}>
-        <Text style={styles.claimText}>Claim Reward</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    alignItems: "center",
-    padding: 40,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-  },
+const sc = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: "#0A2540", paddingHorizontal: 16, paddingTop: 50 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 },
+  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#1E3A5F", alignItems: "center", justifyContent: "center" },
+  heading: { color: "#fff", fontSize: 20, fontWeight: "bold" },
+  center: { justifyContent: "center", alignItems: "center" },
+  
+  heroCard: { backgroundColor: "#1E3A5F", borderRadius: 20, padding: 20, flexDirection: "row", alignItems: "center", marginBottom: 25 },
+  heroLeft: { flex: 1 },
+  heroLabel: { color: "#7BA7D4", fontSize: 12 },
+  heroValue: { color: "#fff", fontSize: 28, fontWeight: "bold", marginVertical: 8 },
+  progressBar: { height: 6, backgroundColor: "#0A2540", borderRadius: 3 },
+  progressFill: { height: 6, backgroundColor: "#3B82F6", borderRadius: 3 },
+  heroDivider: { width: 1, height: 50, backgroundColor: "#2D4F72", marginHorizontal: 20 },
+  heroRight: { alignItems: "center" },
+  streakNum: { color: "#F59E0B", fontSize: 24, fontWeight: "bold" },
+  streakLabel: { color: "#7BA7D4", fontSize: 10 },
 
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: "#3B82F6",
-  },
+  sectionTitle: { color: "#fff", fontSize: 16, fontWeight: "700", marginBottom: 15, marginTop: 10 },
+  statsGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: 'space-between', gap: 10, marginBottom: 20 },
+  statCard: { backgroundColor: "#1E3A5F", borderRadius: 15, padding: 15, alignItems: "center", width: "31%" },
+  iconCircle: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 8 },
+  statValue: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  statLabel: { color: "#7BA7D4", fontSize: 10, textAlign: "center" },
 
-  name: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 10,
-  },
-
-  role: {
-    color: "#AFCBFF",
-    marginBottom: 10,
-  },
-
-  levelBox: {
-    backgroundColor: "#3B82F6",
-    paddingHorizontal: 15,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-
-  levelText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-
-  stats: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginVertical: 20,
-  },
-
-  statBox: {
-    alignItems: "center",
-  },
-
-  statValue: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-
-  statLabel: {
-    color: "#AFCBFF",
-  },
-
-  card: {
-    backgroundColor: "#1E3A5F",
-    margin: 16,
-    borderRadius: 16,
-    padding: 15,
-  },
-
-  cardTitle: {
-    color: "#fff",
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-
-  rewardItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-
-  rewardText: {
-    color: "#fff",
-    marginLeft: 10,
-  },
-
-  progressBar: {
-    height: 10,
-    backgroundColor: "#0A2540",
-    borderRadius: 10,
-    overflow: "hidden",
-    marginTop: 10,
-  },
-
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#22c55e",
-  },
-
-  progressText: {
-    color: "#AFCBFF",
-    marginTop: 5,
-  },
-
-  claimBtn: {
-    backgroundColor: "#22c55e",
-    margin: 20,
-    padding: 15,
-    borderRadius: 30,
-    alignItems: "center",
-  },
-
-  claimText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
+  badgesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, paddingBottom: 20 },
+  badgeCard: { backgroundColor: "#fff", borderRadius: 16, padding: 16, alignItems: "center", width: "48%" },
+  badgeCardDim: { backgroundColor: "#132D4A" },
+  badgeIcon: { width: 50, height: 50, borderRadius: 25, alignItems: "center", justifyContent: "center", marginBottom: 10 },
+  badgeTitle: { color: "#0F172A", fontWeight: "bold", fontSize: 13 },
+  badgeDesc: { color: "#64748B", fontSize: 10, textAlign: "center", marginTop: 4, marginBottom: 10, height: 30 },
+  earnedPill: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10 },
+  earnedTxt: { fontSize: 10, fontWeight: "bold" },
 });
