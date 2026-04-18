@@ -28,15 +28,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="search"
-        options={{
-          title: "Search",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="search-outline" size={25} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="map"
         options={{
           title: "Map",
@@ -51,6 +42,15 @@ export default function TabLayout() {
           title: "Reward",
           tabBarIcon: ({ color }) => (
             <Ionicons name="ribbon-outline" size={25} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: "Notification",
+          tabBarIcon: ({ color }) => (
+           <Ionicons name="notifications-outline" size={25} color={color} />
           ),
         }}
       />

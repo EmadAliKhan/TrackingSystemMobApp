@@ -1,382 +1,386 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { jwtDecode } from "jwt-decode";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   FlatList,
-  Modal,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 
-type TaskStatus = "pending" | "accepted" | "rejected";
+// ─── TYPES ───────────────────────────────────────────────────────────────────
 
 interface Task {
-  id: string;
-  title: string;
-  location: string;
-  time: string;
-  status: TaskStatus;
-  priority: "High" | "Medium" | "Low";
+  _id: string;
+  TaskNo: number;
+  Task: string;
+  status: "pending" | "accepted" | "completed" | "rejected";
+  distance?: number;
+  estimatedTime?: number;
+  locationLink?: string;
+  updatedAt?: string;
+  totalDistance?: number;
+  totalTime?: number;
 }
 
-export default function Tasks() {
-  const [activeTab, setActiveTab] = useState<TaskStatus>("pending");
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
+type TabType = "pending" | "accepted" | "completed" | "rejected";
 
-  const tasks: Task[] = [
-    {
-      id: "1",
-      title: "Visit Client Office",
-      location: "Karachi Office",
-      time: "10:00 AM",
-      status: "pending",
-      priority: "High",
-    },
-    {
-      id: "2",
-      title: "Delivery Task",
-      location: "Clifton Block 5",
-      time: "02:00 PM",
-      status: "accepted",
-      priority: "Medium",
-    },
-    {
-      id: "3",
-      title: "Site Inspection",
-      location: "Gulshan Area",
-      time: "04:30 PM",
-      status: "rejected",
-      priority: "Low",
-    },
-  ];
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+// const MY_USER_ID = "69d8eb0649052d70b41e4b03";
+const API_BASE = "https://fyp-coral.vercel.app/api/tasks";
+// const API_BASE = "http://localhost:3000/api/tasks";
 
-  const filteredTasks = tasks.filter(
-    (task) => task.status === activeTab
-  );
+interface UserProfile {
+  name?: string;
+  login?: boolean;
+  email?: string;
+  userId?: string;
+}
 
-  const getStatusColor = (status: TaskStatus) => {
-    switch (status) {
-      case "pending":
-        return "#FACC15";
-      case "accepted":
-        return "#22C55E";
-      case "rejected":
-        return "#EF4444";
+export default function TaskManagement() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>("pending");
+  const [userId, setUserId] = useState<string>("");
+  const [profileData, setProfileData] = useState<UserProfile | null>(null);
+  // 1. FETCH DATA
+  const fetchTasks = useCallback(async (userId: string) => {
+    try {
+      const response = await fetch(`${API_BASE}?userId=${userId}`);
+      const json = await response.json();
+      console.log("API Response:", json);
+      if (response.ok) {
+        setTasks(json.taskData || []);
+      } else {
+        console.error("API Error:", json.error);
+      }
+    } catch (error) {
+      console.error("Network Error:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const token = await AsyncStorage.getItem("token");
+        if (token) {
+          // Explicitly typing the decoded token
+          const decoded = jwtDecode<UserProfile>(token);
+          setProfileData(decoded);
+          console.log("Decoded Token:", decoded);
+          setUserId(decoded.userId || "");
+          console.log("Decoded Id:", decoded.userId || "");
+
+          fetchTasks(decoded?.userId || "");
+        }
+      } catch (error) {
+        console.error("Auth Error:", error);
+      }
+    };
+    checkUser();
+  }, [fetchTasks]);
+
+  // 2. ACCEPT TASK LOGIC
+  const handleAccept = async (taskNo: number) => {
+    try {
+      const response = await fetch(API_BASE, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          taskNo: taskNo,
+          status: "accepted",
+          userId: userId,
+        }),
+      });
+
+      if (response.ok) {
+        // Update local state immediately
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.TaskNo === taskNo ? { ...t, status: "accepted" as const } : t,
+          ),
+        );
+        Alert.alert("Success", "Task accepted! Check the 'Accepted' tab.");
+        setActiveTab("accepted");
+      } else {
+        Alert.alert("Error", "Could not accept task.");
+      }
+    } catch (error) {
+      Alert.alert("Connection Error", "Check your internet.");
+    }
+  };
+  const handleReject = async (taskNo: number) => {
+    try {
+      const response = await fetch(API_BASE, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          taskNo: taskNo,
+          status: "rejected",
+          userId: userId,
+        }),
+      });
+
+      if (response.ok) {
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.TaskNo === taskNo ? { ...t, status: "rejected" as const } : t,
+          ),
+        );
+
+        Alert.alert("Rejected", "Task moved to rejected tab");
+        setActiveTab("rejected");
+      } else {
+        Alert.alert("Error", "Could not reject task.");
+      }
+    } catch (error) {
+      Alert.alert("Connection Error", "Check your internet.");
     }
   };
 
-  const renderTask = ({ item }: { item: Task }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.taskTitle}>{item.title}</Text>
+  // 3. FILTER TASKS (Using normalized status strings)
+  const filteredData = tasks.filter(
+    (t) => t.status?.toLowerCase() === activeTab.toLowerCase(),
+  );
 
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusColor(item.status) },
-          ]}
-        >
-          <Text style={styles.statusText}>
-            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.infoRow}>
-        <Ionicons name="location-outline" size={18} color="#0A2540" />
-        <Text style={styles.infoText}>{item.location}</Text>
-      </View>
-
-      <View style={styles.infoRow}>
-        <Ionicons name="time-outline" size={18} color="#0A2540" />
-        <Text style={styles.infoText}>{item.time}</Text>
-      </View>
-
-      {/* Priority */}
-      <View style={styles.infoRow}>
-        <Ionicons name="alert-circle-outline" size={18} color="#0A2540" />
-        <Text style={[styles.infoText, { fontWeight: "bold" }]}>
-          {item.priority} Priority
+  const renderItem = ({ item }: { item: Task }) => (
+    <View style={s.card}>
+      <View style={s.cardLeft}>
+        <Text style={s.taskNo}>TASK #{item.TaskNo}</Text>
+        <Text style={s.taskTitle}>{item.Task}</Text>
+        <Text style={s.taskSub}>
+          {item.totalDistance !== undefined
+            ? `${item.totalDistance.toFixed(2)} km`
+            : "N/A"}{" "}
+          •
+          {item.totalTime !== undefined
+            ? ` ${item.totalTime.toFixed(0)} mins`
+            : " --"}
         </Text>
       </View>
 
-      {/* Pending countdown */}
-      {item.status === "pending" && (
-        <Text style={styles.pendingCountdown}>⏳ Complete before deadline!</Text>
-      )}
+      <View style={s.cardRight}>
+        {/* Case 1: Pending */}
+        {/* {item.status === "pending" && (
+          <TouchableOpacity
+            style={s.btnAccept}
+            onPress={() => handleAccept(item.TaskNo)}
+          >
+            <Text style={s.btnTxt}>Accept</Text>
+          </TouchableOpacity>
+        )} */}
+        {item.status === "pending" && (
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            {/* <TouchableOpacity
+              style={s.btnAccept}
+              onPress={() => handleAccept(item.TaskNo)}
+            >
+              <Text style={s.btnTxt}>Accept</Text>
+            </TouchableOpacity> */}
+            <Ionicons
+              name="checkmark-circle"
+              size={24}
+              color="#10B981"
+              onPress={() => handleReject(item.TaskNo)}
+            />
+            {/* <TouchableOpacity
+              style={s.btnReject}
+              onPress={() => handleReject(item.TaskNo)}
+            >
+              <Text style={s.btnTxt}>Reject</Text>
+            </TouchableOpacity> */}
+            <Ionicons
+              name="close-circle"
+              size={24}
+              color="#EF4444"
+              onPress={() => handleReject(item.TaskNo)}
+            />
+          </View>
+        )}
+        {item.status === "rejected" && (
+          <View style={s.rejectBadge}>
+            <Ionicons name="close-circle" size={24} color="#EF4444" />
+            <Text style={s.rejectTxt}>Rejected</Text>
+          </View>
+        )}
+        {/* Case 2: Accepted */}
+        {item.status === "accepted" && (
+          <TouchableOpacity
+            style={s.btnMap}
+            onPress={() =>
+              router.push({
+                pathname: "/map",
+                params: {
+                  taskNo: item.TaskNo,
+                  taskTitle: item.Task,
+                  link: item.locationLink || "",
+                },
+              })
+            }
+          >
+            <Ionicons name="map" size={16} color="#fff" />
+            <Text style={s.btnTxt}> Map</Text>
+          </TouchableOpacity>
+        )}
 
-      {/* 🔥 SHOW MORE BUTTON */}
-      <TouchableOpacity
-        style={styles.moreBtn}
-        onPress={() => {
-          setSelectedTask(item);
-          setModalVisible(true);
-        }}
-      >
-        <Text style={styles.moreText}>Show More</Text>
-      </TouchableOpacity>
+        {/* Case 3: Completed */}
+        {item.status === "completed" && (
+          <View style={s.doneBadge}>
+            <Ionicons name="checkmark-done-circle" size={24} color="#10B981" />
+            <Text style={s.doneTxt}>Completed</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 
-  const tabLabels = ["Pending", "Accepted", "Rejected"];
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>My Tasks</Text>
+    <View style={s.container}>
+      <Text style={s.header}>Task Board</Text>
 
       {/* TABS */}
-      <View style={styles.tabsContainer}>
-        {["pending", "accepted", "rejected"].map((status, index) => (
-          <TouchableOpacity
-            key={status}
-            style={[
-              styles.tab,
-              activeTab === status && styles.activeTab,
-            ]}
-            onPress={() => setActiveTab(status as TaskStatus)}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === status && styles.activeTabText,
-              ]}
+      <View style={s.tabContainer}>
+        {(["pending", "accepted", "completed", "rejected"] as TabType[]).map(
+          (tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[s.tab, activeTab === tab && s.tabActive]}
+              onPress={() => setActiveTab(tab)}
             >
-              {tabLabels[index]}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text style={[s.tabTxt, activeTab === tab && s.tabTxtActive]}>
+                {tab.toUpperCase()}
+              </Text>
+            </TouchableOpacity>
+          ),
+        )}
       </View>
 
-      {/* LIST */}
-      <FlatList
-        data={filteredTasks}
-        keyExtractor={(item) => item.id}
-        renderItem={renderTask}
-      />
-
-      {/* 🔥 MODAL */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            {selectedTask && (
-              <>
-                <Text style={styles.modalTitle}>
-                  {selectedTask.title}
-                </Text>
-
-                <Text>📍 {selectedTask.location}</Text>
-                <Text>⏰ {selectedTask.time}</Text>
-                <Text>⚠️ Priority: {selectedTask.priority}</Text>
-
-                {/* DIFFERENT UI BASED ON STATUS */}
-                {selectedTask.status === "pending" && (
-                  <View style={styles.modalActions}>
-                    <TouchableOpacity style={styles.acceptBtn}>
-                      <Text style={styles.btnText}>Accept</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.rejectBtn}>
-                      <Text style={styles.btnText}>Reject</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {selectedTask.status === "accepted" && (
-                  <TouchableOpacity
-                    style={styles.trackBtn}
-                    onPress={() => {
-                      setModalVisible(false);
-                      router.push("/map"); // 🔥 GO TO MAP SCREEN
-                    }}
-                  >
-                    <Text style={styles.btnText}>
-                      Start Live Tracking
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
-                {selectedTask.status === "rejected" && (
-                  <Text style={{ marginTop: 10, color: "#EF4444" }}>
-                    ❌ This task was rejected
-                  </Text>
-                )}
-
-                <TouchableOpacity
-                  onPress={() => setModalVisible(false)}
-                  style={styles.closeBtn}
-                >
-                  <Text style={{ color: "#fff" }}>Close</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
+      {loading ? (
+        <ActivityIndicator
+          size="large"
+          color="#3B82F6"
+          style={{ marginTop: 50 }}
+        />
+      ) : (
+        <FlatList
+          data={filteredData}
+          keyExtractor={(item) => item._id}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true);
+                fetchTasks(userId);
+              }}
+              tintColor="#fff"
+            />
+          }
+          ListEmptyComponent={
+            <View style={s.emptyBox}>
+              <Ionicons name="clipboard-outline" size={48} color="#1E3A5F" />
+              <Text style={s.emptyTxt}>No {activeTab} tasks found.</Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0A2540",
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingTop: 60,
   },
-
-  heading: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-
-  tabsContainer: {
-    flexDirection: "row",
-    marginBottom: 20,
-  },
-
+  header: { color: "#fff", fontSize: 24, fontWeight: "bold", marginBottom: 20 },
+  tabContainer: { flexDirection: "row", gap: 8, marginBottom: 20 },
   tab: {
     flex: 1,
-    padding: 10,
+    paddingVertical: 12,
     backgroundColor: "#1E3A5F",
-    marginHorizontal: 5,
-    borderRadius: 20,
+    borderRadius: 10,
     alignItems: "center",
   },
-
-  activeTab: {
-    backgroundColor: "#3B82F6",
-  },
-
-  tabText: {
-    color: "#AFCBFF",
-  },
-
-  activeTabText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-
+  tabActive: { backgroundColor: "#3B82F6" },
+  tabTxt: { color: "#7BA7D4", fontSize: 11, fontWeight: "bold" },
+  tabTxtActive: { color: "#fff" },
   card: {
-    backgroundColor: "#F1F5F9",
-    padding: 15,
-    borderRadius: 16,
-    marginBottom: 15,
-  },
-
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-
-  taskTitle: {
-    fontWeight: "bold",
-    color: "#0A2540",
-  },
-
-  statusBadge: {
-    paddingHorizontal: 8,
-    borderRadius: 10,
-  },
-
-  statusText: {
-    color: "#fff",
-    fontSize: 10,
-  },
-
-  infoRow: {
-    flexDirection: "row",
-    marginTop: 5,
-  },
-
-  infoText: {
-    marginLeft: 8,
-  },
-
-  pendingCountdown: {
-    marginTop: 5,
-    fontStyle: "italic",
-    color: "#F59E0B",
-  },
-
-  moreBtn: {
-    marginTop: 10,
-    backgroundColor: "#0A2540",
-    padding: 8,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-
-  moreText: {
-    color: "#fff",
-  },
-
-  /* MODAL */
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  modalBox: {
-    width: "85%",
     backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 20,
-  },
-
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-
-  modalActions: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 15,
-  },
-
-  acceptBtn: {
-    backgroundColor: "#22C55E",
-    padding: 10,
-    borderRadius: 10,
-    flex: 1,
-    marginRight: 5,
     alignItems: "center",
+    elevation: 3, // Shadow for Android
+    shadowColor: "#000", // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-
-  rejectBtn: {
+  cardLeft: { flex: 1 },
+  taskNo: {
+    fontSize: 10,
+    color: "#94A3B8",
+    fontWeight: "bold",
+    letterSpacing: 1,
+  },
+  taskTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1E293B",
+    marginVertical: 4,
+  },
+  btnReject: {
     backgroundColor: "#EF4444",
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 10,
-    flex: 1,
-    marginLeft: 5,
+  },
+
+  rejectBadge: {
     alignItems: "center",
   },
 
-  trackBtn: {
-    marginTop: 15,
-    backgroundColor: "#0A2540",
-    padding: 12,
+  rejectTxt: {
+    color: "#EF4444",
+    fontSize: 11,
+    fontWeight: "bold",
+    marginTop: 2,
+  },
+  taskSub: { fontSize: 12, color: "#64748B" },
+  cardRight: { marginLeft: 10 },
+  btnAccept: {
+    backgroundColor: "#F59E0B",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 10,
+  },
+  btnMap: {
+    backgroundColor: "#3B82F6",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    flexDirection: "row",
     alignItems: "center",
   },
-
-  closeBtn: {
-    marginTop: 20,
-    backgroundColor: "#1E3A5F",
-    padding: 10,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-
-  btnText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
+  btnTxt: { color: "#fff", fontWeight: "bold", fontSize: 13 },
+  doneBadge: { alignItems: "center" },
+  doneTxt: { color: "#10B981", fontSize: 11, fontWeight: "bold", marginTop: 2 },
+  emptyBox: { alignItems: "center", marginTop: 100 },
+  emptyTxt: { color: "#7BA7D4", marginTop: 10, fontSize: 14 },
 });
