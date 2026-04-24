@@ -16,6 +16,10 @@ import {
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
+interface Coords {
+  lat: number;
+  lng: number;
+}
 interface Task {
   _id: string;
   TaskNo: number;
@@ -27,6 +31,9 @@ interface Task {
   updatedAt?: string;
   totalDistance?: number;
   totalTime?: number;
+  originCoords?: Coords;
+  destinationCoords?: Coords;
+  officeCoords?: Coords; // 🔥 multiple stops
 }
 
 type TabType = "pending" | "accepted" | "completed" | "rejected";
@@ -91,27 +98,85 @@ export default function TaskManagement() {
   }, [fetchTasks]);
 
   // 2. ACCEPT TASK LOGIC
-  const handleAccept = async (taskNo: number) => {
+  // const handleAccept = async (taskNo: number) => {
+  //   try {
+  //     const response = await fetch(API_BASE, {
+  //       method: "PUT",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         taskNo: taskNo,
+  //         status: "accepted",
+  //         userId: userId,
+  //       }),
+  //     });
+
+  //     if (response.ok) {
+  //       // Update local state immediately
+  //       setTasks((prev) =>
+  //         prev.map((t) =>
+  //           t.TaskNo === taskNo ? { ...t, status: "accepted" as const } : t,
+  //         ),
+  //       );
+  //       Alert.alert("Success", "Task accepted! Check the 'Accepted' tab.");
+
+  //       setActiveTab("accepted");
+  //     } else {
+  //       Alert.alert("Error", "Could not accept task.");
+  //     }
+  //   } catch (error) {
+  //     Alert.alert("Connection Error", "Check your internet.");
+  //   }
+  // };
+  const handleAccept = async (task: Task) => {
     try {
       const response = await fetch(API_BASE, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          taskNo: taskNo,
+          taskNo: task.TaskNo,
           status: "accepted",
           userId: userId,
         }),
       });
 
       if (response.ok) {
-        // Update local state immediately
         setTasks((prev) =>
           prev.map((t) =>
-            t.TaskNo === taskNo ? { ...t, status: "accepted" as const } : t,
+            t.TaskNo === task.TaskNo
+              ? { ...t, status: "accepted" as const }
+              : t,
           ),
         );
-        Alert.alert("Success", "Task accepted! Check the 'Accepted' tab.");
-        setActiveTab("accepted");
+
+        // 🔥 DIRECT MAP OPEN
+        // router.push({
+        //   pathname: "/map",
+        //   params: {
+        //     taskNo: task.TaskNo,
+        //     taskTitle: task.Task,
+        //     origin: JSON.stringify((task as any).originCoords),
+        //     destination: JSON.stringify((task as any).destinationCoords),
+        //   },
+        // });
+        // ✅ MAP OPEN
+        // router.push({
+        //   pathname: "/map",
+        //   params: {
+        //     origin: JSON.stringify(task.originCoords),
+        //     destination: JSON.stringify(task.destinationCoords),
+        //   },
+        // });
+
+        router.push({
+          pathname: "/map",
+          params: {
+            stops: JSON.stringify([
+              task.originCoords,
+              task.destinationCoords,
+              task.officeCoords, // 🔥 multiple stops
+            ]),
+          },
+        });
       } else {
         Alert.alert("Error", "Could not accept task.");
       }
@@ -191,7 +256,7 @@ export default function TaskManagement() {
               name="checkmark-circle"
               size={24}
               color="#10B981"
-              onPress={() => handleReject(item.TaskNo)}
+              onPress={() => handleAccept(item)}
             />
             {/* <TouchableOpacity
               style={s.btnReject}
@@ -223,7 +288,9 @@ export default function TaskManagement() {
                 params: {
                   taskNo: item.TaskNo,
                   taskTitle: item.Task,
-                  link: item.locationLink || "",
+
+                  origin: JSON.stringify(item.originCoords),
+                  destination: JSON.stringify(item.destinationCoords),
                 },
               })
             }
@@ -299,57 +366,196 @@ export default function TaskManagement() {
   );
 }
 
+// const s = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: "#F8FAFC",
+//     paddingHorizontal: 20,
+//     paddingTop: 60,
+//   },
+//   header: {
+//     color: "#3B82F6",
+//     fontSize: 24,
+//     fontWeight: "bold",
+//     marginBottom: 20,
+//   },
+//   tabContainer: { flexDirection: "row", gap: 8, marginBottom: 20 },
+//   tab: {
+//     flex: 1,
+//     paddingVertical: 12,
+//     backgroundColor: "#1E3A5F",
+//     borderRadius: 10,
+//     alignItems: "center",
+//   },
+//   tabActive: { backgroundColor: "#3B82F6" },
+//   tabTxt: { color: "#7BA7D4", fontSize: 11, fontWeight: "bold" },
+//   tabTxtActive: { color: "#fff" },
+//   card: {
+//     backgroundColor: "#fff",
+//     borderRadius: 16,
+//     padding: 16,
+//     marginBottom: 12,
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     alignItems: "center",
+//     elevation: 3, // Shadow for Android
+//     shadowColor: "#000", // Shadow for iOS
+//     shadowOffset: { width: 0, height: 2 },
+//     shadowOpacity: 0.1,
+//     shadowRadius: 4,
+//   },
+//   cardLeft: { flex: 1 },
+//   taskNo: {
+//     fontSize: 10,
+//     color: "#94A3B8",
+//     fontWeight: "bold",
+//     letterSpacing: 1,
+//   },
+//   taskTitle: {
+//     fontSize: 16,
+//     fontWeight: "bold",
+//     color: "#1E293B",
+//     marginVertical: 4,
+//   },
+//   btnReject: {
+//     backgroundColor: "#EF4444",
+//     paddingVertical: 10,
+//     paddingHorizontal: 16,
+//     borderRadius: 10,
+//   },
+
+//   rejectBadge: {
+//     alignItems: "center",
+//   },
+
+//   rejectTxt: {
+//     color: "#EF4444",
+//     fontSize: 11,
+//     fontWeight: "bold",
+//     marginTop: 2,
+//   },
+//   taskSub: { fontSize: 12, color: "#64748B" },
+//   cardRight: { marginLeft: 10 },
+//   btnAccept: {
+//     backgroundColor: "#F59E0B",
+//     paddingVertical: 10,
+//     paddingHorizontal: 16,
+//     borderRadius: 10,
+//   },
+//   btnMap: {
+//     backgroundColor: "#3B82F6",
+//     paddingVertical: 10,
+//     paddingHorizontal: 14,
+//     borderRadius: 10,
+//     flexDirection: "row",
+//     alignItems: "center",
+//   },
+//   btnTxt: { color: "#fff", fontWeight: "bold", fontSize: 13 },
+//   doneBadge: { alignItems: "center" },
+//   doneTxt: { color: "#10B981", fontSize: 11, fontWeight: "bold", marginTop: 2 },
+//   emptyBox: { alignItems: "center", marginTop: 100 },
+//   emptyTxt: { color: "#7BA7D4", marginTop: 10, fontSize: 14 },
+// });
+
 const s = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0A2540",
-    paddingHorizontal: 20,
-    paddingTop: 60,
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 16,
+    paddingTop: 50,
   },
-  header: { color: "#fff", fontSize: 24, fontWeight: "bold", marginBottom: 20 },
-  tabContainer: { flexDirection: "row", gap: 8, marginBottom: 20 },
+
+  header: {
+    color: "#0A2540",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 18,
+  },
+
+  tabContainer: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 18,
+  },
+
   tab: {
     flex: 1,
-    paddingVertical: 12,
-    backgroundColor: "#1E3A5F",
-    borderRadius: 10,
+    paddingVertical: 10,
+    backgroundColor: "#E2E8F0",
+    borderRadius: 12,
     alignItems: "center",
   },
-  tabActive: { backgroundColor: "#3B82F6" },
-  tabTxt: { color: "#7BA7D4", fontSize: 11, fontWeight: "bold" },
-  tabTxtActive: { color: "#fff" },
+
+  tabActive: {
+    backgroundColor: "#3B82F6",
+  },
+
+  tabTxt: {
+    color: "#64748B",
+    fontSize: 11,
+    fontWeight: "bold",
+  },
+
+  tabTxtActive: {
+    color: "#fff",
+  },
+
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
     padding: 16,
     marginBottom: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    elevation: 3, // Shadow for Android
-    shadowColor: "#000", // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  cardLeft: { flex: 1 },
+
+  cardLeft: {
+    flex: 1,
+  },
+
   taskNo: {
     fontSize: 10,
     color: "#94A3B8",
     fontWeight: "bold",
     letterSpacing: 1,
   },
+
   taskTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "bold",
-    color: "#1E293B",
+    color: "#0A2540",
     marginVertical: 4,
   },
-  btnReject: {
-    backgroundColor: "#EF4444",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+
+  taskSub: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+
+  cardRight: {
+    marginLeft: 10,
+  },
+
+  btnMap: {
+    backgroundColor: "#3B82F6",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  btnTxt: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 12,
   },
 
   rejectBadge: {
@@ -362,25 +568,26 @@ const s = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 2,
   },
-  taskSub: { fontSize: 12, color: "#64748B" },
-  cardRight: { marginLeft: 10 },
-  btnAccept: {
-    backgroundColor: "#F59E0B",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-  },
-  btnMap: {
-    backgroundColor: "#3B82F6",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    flexDirection: "row",
+
+  doneBadge: {
     alignItems: "center",
   },
-  btnTxt: { color: "#fff", fontWeight: "bold", fontSize: 13 },
-  doneBadge: { alignItems: "center" },
-  doneTxt: { color: "#10B981", fontSize: 11, fontWeight: "bold", marginTop: 2 },
-  emptyBox: { alignItems: "center", marginTop: 100 },
-  emptyTxt: { color: "#7BA7D4", marginTop: 10, fontSize: 14 },
+
+  doneTxt: {
+    color: "#10B981",
+    fontSize: 11,
+    fontWeight: "bold",
+    marginTop: 2,
+  },
+
+  emptyBox: {
+    alignItems: "center",
+    marginTop: 100,
+  },
+
+  emptyTxt: {
+    color: "#94A3B8",
+    marginTop: 10,
+    fontSize: 14,
+  },
 });

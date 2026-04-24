@@ -79,7 +79,9 @@ export default function ProfileSettings() {
       {
         text: "Camera",
         onPress: async () => {
-          const res = await ImagePicker.launchCameraAsync({ allowsEditing: true });
+          const res = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+          });
           if (!res.canceled && user) {
             setUser({ ...user, image: res.assets[0].uri });
           }
@@ -88,7 +90,9 @@ export default function ProfileSettings() {
       {
         text: "Gallery",
         onPress: async () => {
-          const res = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true });
+          const res = await ImagePicker.launchImageLibraryAsync({
+            allowsEditing: true,
+          });
           if (!res.canceled && user) {
             setUser({ ...user, image: res.assets[0].uri });
           }
@@ -134,9 +138,7 @@ export default function ProfileSettings() {
     <View style={styles.item}>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Ionicons name={icon} size={22} color={colors.primary} />
-        <Text style={[styles.itemText, { color: colors.text }]}>
-          {title}
-        </Text>
+        <Text style={[styles.itemText, { color: colors.text }]}>{title}</Text>
       </View>
       {right}
     </View>
@@ -144,7 +146,6 @@ export default function ProfileSettings() {
 
   return (
     <ScrollView style={{ backgroundColor: colors.bg }}>
-
       {/* HEADER */}
       <LinearGradient colors={[colors.bg, colors.card]} style={styles.header}>
         <TouchableOpacity onPress={pickImage}>
@@ -162,9 +163,7 @@ export default function ProfileSettings() {
           {user?.name || "User Name"}
         </Text>
 
-        <Text style={{ color: colors.sub }}>
-          {user?.email || "No Email"}
-        </Text>
+        <Text style={{ color: colors.sub }}>{user?.email || "No Email"}</Text>
 
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           <Text style={{ color: colors.primary, marginTop: 5 }}>
@@ -179,7 +178,10 @@ export default function ProfileSettings() {
           icon="location-outline"
           title="Live Location Sharing"
           right={
-            <Switch value={locationSharing} onValueChange={setLocationSharing} />
+            <Switch
+              value={locationSharing}
+              onValueChange={setLocationSharing}
+            />
           }
         />
 
@@ -207,7 +209,9 @@ export default function ProfileSettings() {
           icon="lock-closed-outline"
           title="Change Password"
           right={
-            <TouchableOpacity onPress={() => router.push("/forgot-password/email")}>
+            <TouchableOpacity
+              onPress={() => router.push("/forgot-password/email")}
+            >
               <Ionicons name="chevron-forward" size={20} color={colors.sub} />
             </TouchableOpacity>
           }
@@ -234,9 +238,7 @@ export default function ProfileSettings() {
             style={styles.input}
             placeholder="Name"
             value={editData?.name}
-            onChangeText={(t) =>
-              setEditData((prev) => ({ ...prev!, name: t }))
-            }
+            onChangeText={(t) => setEditData((prev) => ({ ...prev!, name: t }))}
           />
 
           <TextInput
