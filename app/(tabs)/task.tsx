@@ -34,6 +34,7 @@ interface Task {
   originCoords?: Coords;
   destinationCoords?: Coords;
   officeCoords?: Coords; // 🔥 multiple stops
+  notified?: boolean;
 }
 
 type TabType = "pending" | "accepted" | "completed" | "rejected";
@@ -41,7 +42,8 @@ type TabType = "pending" | "accepted" | "completed" | "rejected";
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 // const MY_USER_ID = "69d8eb0649052d70b41e4b03";
 const API_BASE = "https://fyp-coral.vercel.app/api/tasks";
-// const API_BASE = "http://localhost:3000/api/tasks";
+// const API_BASE = "http://10.114.117.145:3000/api/tasks";
+// const API_BASE = "https://fyp-coral.vercel.app/api/tasks";
 
 interface UserProfile {
   name?: string;
@@ -127,7 +129,84 @@ export default function TaskManagement() {
   //     Alert.alert("Connection Error", "Check your internet.");
   //   }
   // };
+  const isTaskLocked = (item: Task) => {
+    if (item.TaskNo === 1) return false;
+
+    const prevTask = tasks.find((t) => t.TaskNo === item.TaskNo - 1);
+
+    return prevTask?.status !== "completed";
+  };
+
+  // const handleAccept = async (task: Task) => {
+  //   try {
+  //     const response = await fetch(API_BASE, {
+  //       method: "PUT",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         taskNo: task.TaskNo,
+  //         status: "accepted",
+  //         userId: userId,
+  //         taskId: task._id,
+  //       }),
+  //     });
+
+  //     if (response.ok) {
+  //       setTasks((prev) =>
+  //         prev.map((t) =>
+  //           t.TaskNo === task.TaskNo
+  //             ? { ...t, status: "accepted" as const }
+  //             : t,
+  //         ),
+  //       );
+
+  //       // 🔥 DIRECT MAP OPEN
+  //       // router.push({
+  //       //   pathname: "/map",
+  //       //   params: {
+  //       //     taskNo: task.TaskNo,
+  //       //     taskTitle: task.Task,
+  //       //     origin: JSON.stringify((task as any).originCoords),
+  //       //     destination: JSON.stringify((task as any).destinationCoords),
+  //       //   },
+  //       // });
+  //       // ✅ MAP OPEN
+  //       // router.push({
+  //       //   pathname: "/map",
+  //       //   params: {
+  //       //     origin: JSON.stringify(task.originCoords),
+  //       //     destination: JSON.stringify(task.destinationCoords),
+  //       //   },
+  //       // });
+
+  //       router.push({
+  //         pathname: "/map",
+  //         params: {
+  //           stops: JSON.stringify([
+  //             task.originCoords || task.officeCoords, // 🔥 multiple stops
+  //             task.destinationCoords,
+  //             task.officeCoords, // 🔥 multiple stops
+  //           ]),
+  //           userId: userId,     // ← ADD THIS
+  //           taskId: task._id,
+  //           taskNo: task.TaskNo,
+  //         },
+  //       });
+  //     } else {
+  //       Alert.alert("Error", "Could not accept task.");
+  //       const errorData = await response.json();
+  //       console.error("API Error:", errorData);
+  //     }
+  //   } catch (error) {
+  //     Alert.alert("Connection Error", "Check your internet.");
+  //   }
+  // };
   const handleAccept = async (task: Task) => {
+    // 🔐 LOCK CHECK
+    if (isTaskLocked(task)) {
+      Alert.alert("Locked 🔒", "Complete previous task first!");
+      return;
+    }
+
     try {
       const response = await fetch(API_BASE, {
         method: "PUT",
@@ -136,6 +215,7 @@ export default function TaskManagement() {
           taskNo: task.TaskNo,
           status: "accepted",
           userId: userId,
+          taskId: task._id,
         }),
       });
 
@@ -147,34 +227,20 @@ export default function TaskManagement() {
               : t,
           ),
         );
-
-        // 🔥 DIRECT MAP OPEN
-        // router.push({
-        //   pathname: "/map",
-        //   params: {
-        //     taskNo: task.TaskNo,
-        //     taskTitle: task.Task,
-        //     origin: JSON.stringify((task as any).originCoords),
-        //     destination: JSON.stringify((task as any).destinationCoords),
-        //   },
-        // });
-        // ✅ MAP OPEN
-        // router.push({
-        //   pathname: "/map",
-        //   params: {
-        //     origin: JSON.stringify(task.originCoords),
-        //     destination: JSON.stringify(task.destinationCoords),
-        //   },
-        // });
+        console.log(
+          "Task accepted:",
+          task.originCoords,
+          task.destinationCoords,
+          task.officeCoords,
+        );
 
         router.push({
           pathname: "/map",
           params: {
-            stops: JSON.stringify([
-              task.originCoords,
-              task.destinationCoords,
-              task.officeCoords, // 🔥 multiple stops
-            ]),
+            stops: JSON.stringify([task.originCoords, task.destinationCoords]),
+            userId: userId,
+            taskId: task._id,
+            taskNo: task.TaskNo,
           },
         });
       } else {
@@ -184,13 +250,13 @@ export default function TaskManagement() {
       Alert.alert("Connection Error", "Check your internet.");
     }
   };
-  const handleReject = async (taskNo: number) => {
+  const handleReject = async (task: Task) => {
     try {
       const response = await fetch(API_BASE, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          taskNo: taskNo,
+          taskId: task._id,
           status: "rejected",
           userId: userId,
         }),
@@ -199,7 +265,9 @@ export default function TaskManagement() {
       if (response.ok) {
         setTasks((prev) =>
           prev.map((t) =>
-            t.TaskNo === taskNo ? { ...t, status: "rejected" as const } : t,
+            t.TaskNo === task.TaskNo
+              ? { ...t, status: "rejected" as const }
+              : t,
           ),
         );
 
@@ -214,103 +282,238 @@ export default function TaskManagement() {
   };
 
   // 3. FILTER TASKS (Using normalized status strings)
-  const filteredData = tasks.filter(
+  // const filteredData = tasks.filter(
+  //   (t) => t.status?.toLowerCase() === activeTab.toLowerCase(),
+  // );
+  const sortedTasks = [...tasks].sort((a, b) => a.TaskNo - b.TaskNo);
+
+  const filteredData = sortedTasks.filter(
     (t) => t.status?.toLowerCase() === activeTab.toLowerCase(),
   );
 
-  const renderItem = ({ item }: { item: Task }) => (
-    <View style={s.card}>
-      <View style={s.cardLeft}>
-        <Text style={s.taskNo}>TASK #{item.TaskNo}</Text>
-        <Text style={s.taskTitle}>{item.Task}</Text>
-        <Text style={s.taskSub}>
-          {item.totalDistance !== undefined
-            ? `${item.totalDistance.toFixed(2)} km`
-            : "N/A"}{" "}
-          •
-          {item.totalTime !== undefined
-            ? ` ${item.totalTime.toFixed(0)} mins`
-            : " --"}
-        </Text>
-      </View>
+  // const renderItem = ({ item }: { item: Task }) => (
 
-      <View style={s.cardRight}>
-        {/* Case 1: Pending */}
-        {/* {item.status === "pending" && (
-          <TouchableOpacity
-            style={s.btnAccept}
-            onPress={() => handleAccept(item.TaskNo)}
-          >
-            <Text style={s.btnTxt}>Accept</Text>
-          </TouchableOpacity>
-        )} */}
-        {item.status === "pending" && (
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            {/* <TouchableOpacity
-              style={s.btnAccept}
-              onPress={() => handleAccept(item.TaskNo)}
+  //   <View style={s.card}>
+  //     <View style={s.cardLeft}>
+  //       <Text style={s.taskNo}>TASK #{item.TaskNo}</Text>
+  //       <Text style={s.taskTitle}>{item.Task}</Text>
+  //       <Text style={s.taskSub}>
+  //         {item.distance !== undefined
+  //           ? `${item.distance.toFixed(2)} km`
+  //           : "N/A"}{" "}
+  //         •
+  //         {item.estimatedTime !== undefined
+  //           ? ` ${item.estimatedTime.toFixed(0)} mins`
+  //           : " --"}
+  //       </Text>
+  //     </View>
+
+  //     <View style={s.cardRight}>
+  //       {/* Case 1: Pending */}
+  //       {/* {item.status === "pending" && (
+  //         <TouchableOpacity
+  //           style={s.btnAccept}
+  //           onPress={() => handleAccept(item.TaskNo)}
+  //         >
+  //           <Text style={s.btnTxt}>Accept</Text>
+  //         </TouchableOpacity>
+  //       )} */}
+
+  //       {item.status === "pending" && (
+  //         <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+  //           {isTaskLocked(item) ? (
+  //             <View style={{ alignItems: "center" }}>
+  //               <Ionicons name="lock-closed" size={24} color="#9CA3AF" />
+  //               <Text style={{ fontSize: 10, color: "#9CA3AF" }}>Locked</Text>
+  //             </View>
+  //           ) : (
+  //             <Ionicons
+  //               name="checkmark-circle"
+  //               size={24}
+  //               color="#10B981"
+  //               onPress={() => handleAccept(item)}
+  //             />
+  //           )}
+
+  //           <Ionicons
+  //             name="close-circle"
+  //             size={24}
+  //             color="#EF4444"
+  //             onPress={() => handleReject(item)}
+  //           />
+  //         </View>
+  //       )}
+
+  //       {item.status === "rejected" && (
+  //         <View style={s.rejectBadge}>
+  //           <Ionicons name="close-circle" size={24} color="#EF4444" />
+  //           <Text style={s.rejectTxt}>Rejected</Text>
+  //         </View>
+  //       )}
+  //       {/* Case 2: Accepted */}
+  //       {/* {item.status === "accepted" && (
+  //         <TouchableOpacity
+  //           style={s.btnMap}
+  //           onPress={() =>
+  //             router.push({
+  //               pathname: "/map",
+  //               params: {
+  //                 taskNo: item.TaskNo,
+  //                 taskId: item.TaskId,
+  //                 taskTitle: item.Task,
+
+  //                 origin: JSON.stringify(item.originCoords),
+  //                 destination: JSON.stringify(item.destinationCoords),
+  //               },
+  //             })
+  //           }
+  //         >
+  //           <Ionicons name="map" size={16} color="#fff" />
+  //           <Text style={s.btnTxt}> Map</Text>
+  //         </TouchableOpacity>
+  //       )} */}
+
+  //       {item.status === "accepted" && (
+  //         <TouchableOpacity
+  //           style={s.btnMap}
+  //           onPress={() =>
+  //             router.push({
+  //               pathname: "/map",
+  //               params: {
+  //                 stops: JSON.stringify([
+  //                   item.originCoords || item.officeCoords,
+  //                   item.destinationCoords,
+  //                   item.officeCoords,
+  //                 ]),
+  //                 userId: userId, // ← ADD THIS
+  //                 taskId: item._id, // ← ADD THIS
+  //                 taskNo: item.TaskNo, // ← ADD THIS
+  //               },
+  //             })
+  //           }
+  //         >
+  //           <Ionicons name="map" size={16} color="#fff" />
+  //           <Text style={s.btnTxt}> Map</Text>
+  //         </TouchableOpacity>
+  //       )}
+
+  //       {/* Case 3: Completed */}
+  //       {item.status === "completed" && (
+  //         <View style={s.doneBadge}>
+  //           <Ionicons name="checkmark-done-circle" size={24} color="#10B981" />
+  //           <Text style={s.doneTxt}>Completed</Text>
+  //         </View>
+  //       )}
+  //     </View>
+  //   </View>
+  // );
+  const renderItem = ({ item }: { item: Task }) => {
+    // 🔥 DEBUG LOGS (Console me data dekhne ke liye)
+    console.log("────────────────────────────");
+    console.log(`🧾 TASK #${item.TaskNo}`);
+    console.log("Status:", item.status);
+    console.log("Distance:", item.distance);
+    console.log("Total Distance:", item.totalDistance);
+    console.log("Estimated Time:", item.estimatedTime);
+    console.log("Origin Coords:", item.originCoords);
+    console.log("Destination Coords:", item.destinationCoords);
+    console.log("Office Coords:", item.officeCoords);
+    console.log("────────────────────────────");
+
+    return (
+      <View style={s.card}>
+        <View style={s.cardLeft}>
+          <Text style={s.taskNo}>TASK #{item.TaskNo}</Text>
+          <Text style={s.taskTitle}>{item.Task}</Text>
+
+          <Text style={s.taskSub}>
+            {item.distance !== undefined
+              ? `${item.distance.toFixed(2)} km`
+              : "N/A"}{" "}
+            •
+            {item.estimatedTime !== undefined
+              ? ` ${item.estimatedTime.toFixed(0)} mins`
+              : " --"}
+          </Text>
+        </View>
+
+        <View style={s.cardRight}>
+          {/* Pending */}
+          {item.status === "pending" && (
+            <View
+              style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
             >
-              <Text style={s.btnTxt}>Accept</Text>
-            </TouchableOpacity> */}
-            <Ionicons
-              name="checkmark-circle"
-              size={24}
-              color="#10B981"
-              onPress={() => handleAccept(item)}
-            />
-            {/* <TouchableOpacity
-              style={s.btnReject}
-              onPress={() => handleReject(item.TaskNo)}
+              {isTaskLocked(item) ? (
+                <View style={{ alignItems: "center" }}>
+                  <Ionicons name="lock-closed" size={24} color="#9CA3AF" />
+                  <Text style={{ fontSize: 10, color: "#9CA3AF" }}>Locked</Text>
+                </View>
+              ) : (
+                <Ionicons
+                  name="checkmark-circle"
+                  size={24}
+                  color="#10B981"
+                  onPress={() => handleAccept(item)}
+                />
+              )}
+
+              <Ionicons
+                name="close-circle"
+                size={24}
+                color="#EF4444"
+                onPress={() => handleReject(item)}
+              />
+            </View>
+          )}
+
+          {/* Rejected */}
+          {item.status === "rejected" && (
+            <View style={s.rejectBadge}>
+              <Ionicons name="close-circle" size={24} color="#EF4444" />
+              <Text style={s.rejectTxt}>Rejected</Text>
+            </View>
+          )}
+
+          {/* Accepted */}
+          {item.status === "accepted" && (
+            <TouchableOpacity
+              style={s.btnMap}
+              onPress={() =>
+                router.push({
+                  pathname: "/map",
+                  params: {
+                    stops: JSON.stringify([
+                      item.originCoords || item.officeCoords,
+                      item.destinationCoords,
+                      item.officeCoords,
+                    ]),
+                    userId: userId,
+                    taskId: item._id,
+                    taskNo: item.TaskNo,
+                  },
+                })
+              }
             >
-              <Text style={s.btnTxt}>Reject</Text>
-            </TouchableOpacity> */}
-            <Ionicons
-              name="close-circle"
-              size={24}
-              color="#EF4444"
-              onPress={() => handleReject(item.TaskNo)}
-            />
-          </View>
-        )}
-        {item.status === "rejected" && (
-          <View style={s.rejectBadge}>
-            <Ionicons name="close-circle" size={24} color="#EF4444" />
-            <Text style={s.rejectTxt}>Rejected</Text>
-          </View>
-        )}
-        {/* Case 2: Accepted */}
-        {item.status === "accepted" && (
-          <TouchableOpacity
-            style={s.btnMap}
-            onPress={() =>
-              router.push({
-                pathname: "/map",
-                params: {
-                  taskNo: item.TaskNo,
-                  taskTitle: item.Task,
+              <Ionicons name="map" size={16} color="#fff" />
+              <Text style={s.btnTxt}> Map</Text>
+            </TouchableOpacity>
+          )}
 
-                  origin: JSON.stringify(item.originCoords),
-                  destination: JSON.stringify(item.destinationCoords),
-                },
-              })
-            }
-          >
-            <Ionicons name="map" size={16} color="#fff" />
-            <Text style={s.btnTxt}> Map</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Case 3: Completed */}
-        {item.status === "completed" && (
-          <View style={s.doneBadge}>
-            <Ionicons name="checkmark-done-circle" size={24} color="#10B981" />
-            <Text style={s.doneTxt}>Completed</Text>
-          </View>
-        )}
+          {/* Completed */}
+          {item.status === "completed" && (
+            <View style={s.doneBadge}>
+              <Ionicons
+                name="checkmark-done-circle"
+                size={24}
+                color="#10B981"
+              />
+              <Text style={s.doneTxt}>Completed</Text>
+            </View>
+          )}
+        </View>
       </View>
-    </View>
-  );
-
+    );
+  };
   return (
     <View style={s.container}>
       <Text style={s.header}>Task Board</Text>

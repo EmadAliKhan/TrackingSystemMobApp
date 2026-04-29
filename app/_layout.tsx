@@ -45,9 +45,13 @@
 //     </Stack>
 //   );
 // }
-
+import { NotificationProvider } from "./context/NotificationContext";
 import { Stack } from "expo-router";
 
 export default function RootLayout() {
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <NotificationProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </NotificationProvider>
+  );
 }
