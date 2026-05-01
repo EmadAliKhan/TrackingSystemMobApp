@@ -1,5 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { jwtDecode } from "jwt-decode";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -35,7 +37,7 @@ interface Badge {
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const CURRENT_USER_ID = "69d8eb0649052d70b41e4b03";
+// const CURRENT_USER_ID = "69d8eb0649052d70b41e4b03";
 const API_BASE = "https://fyp-coral.vercel.app/api/tasks";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -43,6 +45,7 @@ const API_BASE = "https://fyp-coral.vercel.app/api/tasks";
 const fetchStats = async (userId: string): Promise<TaskStats> => {
   const res = await fetch(`${API_BASE}?userId=${userId}`);
   const data = await res.json();
+  console.log("data reward", data);
 
   if (!res.ok) throw new Error(data.error || "Failed to fetch");
 
@@ -171,7 +174,12 @@ const BadgeCard = ({ badge }: { badge: Badge }) => (
 );
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
-
+interface UserProfile {
+  name?: string;
+  login?: boolean;
+  email?: string;
+  userId?: string;
+}
 export default function Rewards() {
   const [stats, setStats] = useState<TaskStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -179,8 +187,18 @@ export default function Rewards() {
 
   const load = useCallback(async () => {
     try {
-      const s = await fetchStats(CURRENT_USER_ID);
-      setStats(s);
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        // Explicitly typing the decoded token
+        const decoded = jwtDecode<UserProfile>(token);
+        // setProfileData(decoded);
+        console.log("Decoded Token:", decoded);
+        const s = await fetchStats(decoded?.userId || "");
+        setStats(s);
+        // console.log("Decoded Id:", decoded.userId || "");
+
+        // fetchTasks(decoded?.userId || "");
+      }
     } catch (e: any) {
       Alert.alert("Error", "Could not load stats");
     } finally {
@@ -233,7 +251,7 @@ export default function Rewards() {
         {/* Progress Overview */}
         <View style={sc.heroCard}>
           <View style={sc.heroLeft}>
-            <Text style={sc.heroLabel}>Total Rewards</Text>
+            <Text style={sc.heroLabel}>Total Rewards (Current Month)</Text>
             <Text style={sc.heroValue}>
               {earnedCount} / {badges.length}
             </Text>
@@ -296,12 +314,12 @@ export default function Rewards() {
         </View>
 
         {/* Badges Section */}
-        <Text style={sc.sectionTitle}>Achievements</Text>
+        {/* <Text style={sc.sectionTitle}>Achievements</Text>
         <View style={sc.badgesGrid}>
           {badges.map((b) => (
             <BadgeCard key={b.id} badge={b} />
           ))}
-        </View>
+        </View> */}
       </ScrollView>
     </View>
   );

@@ -275,6 +275,7 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from "expo-location";
 import { router } from "expo-router";
 import { jwtDecode } from "jwt-decode";
 import React, { useEffect, useState } from "react";
@@ -289,7 +290,6 @@ import {
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 const screenWidth = Dimensions.get("window").width;
 
 // TYPES
@@ -297,28 +297,67 @@ interface UserProfile {
   name?: string;
   login?: boolean;
   email?: string;
-  id?: string;
+  userId?: string;
 }
 
 interface DashboardStat {
   title: string;
-  value: number;
+  value: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
 }
 
 const Dashboard = () => {
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
+  const [pendingTask, setPendingTask] = useState("");
+  const [reward, setReward] = useState("");
+  const [rejectedTask, setRejectedTask] = useState("");
+  const [completedTask, setCompletedTask] = useState("");
   const [hasNewNotifications, setHasNewNotifications] = useState(true);
+  const API_BASE = "https://fyp-coral.vercel.app/api/dashboardData";
+  const [locationEnabled, setLocationEnabled] = useState(false);
+  const checkLocationStatus = async () => {
+    try {
+      // Permission check
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      console.log(status);
+      if (status !== "granted") {
+        setLocationEnabled(false);
+        return;
+      }
+
+      // GPS check
+      const enabled = await Location.hasServicesEnabledAsync();
+
+      setLocationEnabled(enabled);
+    } catch (err) {
+      console.log("Location Error:", err);
+      setLocationEnabled(false);
+    }
+  };
+  const getData = async (userId: String) => {
+    console.log(userId);
+    const data = await fetch(`${API_BASE}?userId=${userId}`);
+    // console.log("data", await data.json());
+    let response = await data.json();
+    console.log(response?.tasks);
+    setPendingTask(response?.tasks?.pending);
+    setReward(response?.reward);
+    setRejectedTask(response?.tasks?.rejected);
+    setCompletedTask(response?.tasks?.completed);
+  };
 
   useEffect(() => {
     const checkUser = async () => {
+      let userId;
       try {
         const token = await AsyncStorage.getItem("token");
         if (token) {
           const decoded = jwtDecode<UserProfile>(token);
           setProfileData(decoded);
-
+          console.log("decoded", decoded);
+          userId = decoded?.userId;
+          getData(userId || "");
           if (decoded?.login === false) {
             Alert.alert(
               "Action Required 🔒",
@@ -338,24 +377,32 @@ const Dashboard = () => {
       }
     };
     checkUser();
+    checkLocationStatus();
   }, []);
 
   const stats: DashboardStat[] = [
-    { title: "Rewards", value: 12, icon: "gift-outline", color: "#8B5CF6" },
+    { title: "Rewards", value: reward, icon: "gift-outline", color: "#8B5CF6" },
     {
       title: "Completed",
-      value: 8,
+      value: completedTask,
       icon: "checkmark-done-outline",
       color: "#22C55E",
     },
     {
       title: "Rejected",
-      value: 4,
+      value: rejectedTask,
       icon: "close-circle-outline",
       color: "#EF4444",
     },
-    { title: "Incomplete", value: 2, icon: "time-outline", color: "#F59E0B" },
+    {
+      title: "Incomplete",
+      value: pendingTask,
+      icon: "time-outline",
+      color: "#F59E0B",
+    },
   ];
+  const completed = Number(completedTask) || 0;
+  const incomplete = Number(pendingTask) || 0;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -363,9 +410,12 @@ const Dashboard = () => {
         {/* HEADER */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.welcome}>Tracking System</Text>
+            <Text style={styles.welcome}>Welcome Back 👋</Text>
             <Text style={styles.username}>
-              {profileData?.name || "Loading..."}
+              {profileData?.name
+                ? profileData.name.charAt(0).toUpperCase() +
+                  profileData.name.slice(1)
+                : "Loading..."}
             </Text>
           </View>
 
@@ -385,11 +435,30 @@ const Dashboard = () => {
         <View style={styles.statusCard}>
           <View>
             <Text style={styles.statusLabel}>Current Status</Text>
-            <Text style={styles.statusTitle}>Monitoring Active</Text>
-            <Text style={styles.statusTime}>Live Tracking Enabled</Text>
+            {/* <Text style={styles.statusTitle}>Monitoring Active</Text> */}
+            <Text style={styles.statusTitle}>
+              {locationEnabled ? "Monitoring Active" : "Tracking Disabled"}
+            </Text>
+            <Text
+              style={[
+                styles.statusTime,
+                { color: locationEnabled ? "#22C55E" : "#EF4444" },
+              ]}
+            >
+              {locationEnabled ? "Live Tracking Enabled" : "Location Off"}
+            </Text>
+            {/* <Text style={styles.statusTime}>Live Tracking Enabled</Text> */}
           </View>
 
-          <View style={styles.iconCircle}>
+          {/* <View style={styles.iconCircle}>
+            <Ionicons name="location" size={26} color="#fff" />
+          </View> */}
+          <View
+            style={[
+              styles.iconCircle,
+              { backgroundColor: locationEnabled ? "#3B82F6" : "#9CA3AF" },
+            ]}
+          >
             <Ionicons name="location" size={26} color="#fff" />
           </View>
         </View>
@@ -417,7 +486,21 @@ const Dashboard = () => {
           <LineChart
             data={{
               labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-              datasets: [{ data: [5, 8, 6, 10, 7, 12] }],
+              // datasets: [{ data: [5, 8, 6, 10, 7, 12] }],
+              datasets: [
+                {
+                  data: [completed],
+                  color: () => "#22C55E", // 🟢 Green
+                  strokeWidth: 3,
+                },
+                {
+                  data: [incomplete],
+                  color: () => "#EF4444", // 🔴 Red
+                  strokeWidth: 3,
+                },
+              ],
+
+              legend: ["Completed", "Incomplete"], // 🔥 important
             }}
             width={screenWidth - 40}
             height={220}

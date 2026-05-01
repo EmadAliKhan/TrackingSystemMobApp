@@ -201,17 +201,12 @@ export default function TaskManagement() {
   //   }
   // };
   const handleAccept = async (task: Task) => {
-<<<<<<< HEAD
-    console.log("Accepting Task:", task.TaskNo);
-    console.log("userId:", userId);
-=======
     // 🔐 LOCK CHECK
     if (isTaskLocked(task)) {
       Alert.alert("Locked 🔒", "Complete previous task first!");
       return;
     }
 
->>>>>>> 5f2b62397379c948d75d40547c94fb97c35b9e2f
     try {
       const response = await fetch(API_BASE, {
         method: "PUT",
@@ -223,39 +218,8 @@ export default function TaskManagement() {
           taskId: task._id,
         }),
       });
-      // console.log("Accept Response:", response);
-      const data = await response.json();
-      console.log("Accept Response Data:", data);
-      if (response.ok) {
-<<<<<<< HEAD
-        // setTasks((prev) =>
-        //   prev.map((t) =>
-        //     t.TaskNo === task.TaskNo
-        //       ? { ...t, status: "accepted" as const }
-        //       : t,
-        //   ),
-        // );
-        console.log("Task accepted! Navigating to map...", response);
 
-        // 🔥 DIRECT MAP OPEN
-        // router.push({
-        //   pathname: "/map",
-        //   params: {
-        //     taskNo: task.TaskNo,
-        //     taskTitle: task.Task,
-        //     origin: JSON.stringify((task as any).originCoords),
-        //     destination: JSON.stringify((task as any).destinationCoords),
-        //   },
-        // });
-        // ✅ MAP OPEN
-        // router.push({
-        //   pathname: "/map",
-        //   params: {
-        //     origin: JSON.stringify(task.originCoords),
-        //     destination: JSON.stringify(task.destinationCoords),
-        //   },
-        // });
-=======
+      if (response.ok) {
         setTasks((prev) =>
           prev.map((t) =>
             t.TaskNo === task.TaskNo
@@ -269,7 +233,6 @@ export default function TaskManagement() {
           task.destinationCoords,
           task.officeCoords,
         );
->>>>>>> 5f2b62397379c948d75d40547c94fb97c35b9e2f
 
         router.push({
           pathname: "/map",

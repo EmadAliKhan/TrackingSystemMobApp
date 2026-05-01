@@ -25,9 +25,21 @@ export default function EmailScreen() {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.spring(slideAnim, { toValue: 0, friction: 6, useNativeDriver: true }),
-      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-      Animated.spring(logoScale, { toValue: 1, friction: 5, useNativeDriver: true }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        friction: 6,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(logoScale, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
@@ -39,11 +51,14 @@ export default function EmailScreen() {
 
     setLoading(true);
     try {
-      const response = await fetch("https://fyp-coral.vercel.app/api/accounts/employee/changePassword/sendOtp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+      const response = await fetch(
+        "https://fyp-coral.vercel.app/api/accounts/employee/changePassword/sendOtp",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        },
+      );
 
       if (response.ok) {
         Alert.alert("Success", "OTP sent to your email address");
@@ -54,6 +69,7 @@ export default function EmailScreen() {
       } else {
         const data = await response.json();
         Alert.alert("Error", data.error || "Failed to send OTP");
+        console.log("error", data);
       }
     } catch (err) {
       Alert.alert("Error", "Connection error. Please check your internet.");
@@ -63,13 +79,15 @@ export default function EmailScreen() {
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === "ios" ? "padding" : "height"} 
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
       {/* Top Section (Branding) */}
       <View style={styles.topSection}>
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: logoScale }] }}>
+        <Animated.View
+          style={{ opacity: fadeAnim, transform: [{ scale: logoScale }] }}
+        >
           <View style={styles.iconCircle}>
             <Ionicons name="key-outline" size={40} color="#0A2540" />
           </View>
@@ -77,10 +95,13 @@ export default function EmailScreen() {
       </View>
 
       {/* Animated Card */}
-      <Animated.View style={[styles.card, { transform: [{ translateY: slideAnim }] }]}>
+      <Animated.View
+        style={[styles.card, { transform: [{ translateY: slideAnim }] }]}
+      >
         <Text style={styles.title}>Change Password</Text>
         <Text style={styles.subtitle}>
-          Enter your registered email address below and we'll send you a 6-digit OTP to reset your password.
+          Enter your registered email address below and we'll send you a 6-digit
+          OTP to reset your password.
         </Text>
 
         {/* Email Input */}
@@ -98,8 +119,8 @@ export default function EmailScreen() {
         </View>
 
         {/* Send OTP Button */}
-        <TouchableOpacity 
-          style={[styles.button, loading && { opacity: 0.7 }]} 
+        <TouchableOpacity
+          style={[styles.button, loading && { opacity: 0.7 }]}
           onPress={handleSendOtp}
           disabled={loading}
         >

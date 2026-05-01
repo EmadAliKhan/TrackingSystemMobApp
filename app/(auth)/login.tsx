@@ -56,27 +56,30 @@ export default function Index() {
     setLoading(true);
 
     try {
-      const response = await fetch("https://fyp-coral.vercel.app/api/accounts/employee/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "https://fyp-coral.vercel.app/api/accounts/employee/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            employeeId: `EMP-${employeeId}`,
+            password: password,
+          }),
         },
-        body: JSON.stringify({
-          employeeId: employeeId,
-          password: password,
-        }),
-      });
+      );
 
       const data = await response.json();
 
       if (response.ok) {
         // Success: Navigate to dashboard
         console.log("Login success 🚀 Token:", data.token);
-        
+
         // Optional: Save token to SecureStore/AsyncStorage here
-        AsyncStorage.setItem("token",data.token);
-        
-        router.replace("/(tabs)/dashboard"); 
+        AsyncStorage.setItem("token", data.token);
+
+        router.replace("/(tabs)/dashboard");
       } else {
         // API returned an error (e.g., 401 Unauthorized)
         Alert.alert("Login Failed", data.error || "Invalid credentials");
@@ -84,7 +87,10 @@ export default function Index() {
     } catch (error) {
       // Network or Server issues
       console.error("Network error:", error);
-      Alert.alert("Connection Error", "Make sure you are connected to the internet.");
+      Alert.alert(
+        "Connection Error",
+        "Make sure you are connected to the internet.",
+      );
     } finally {
       setLoading(false);
     }
@@ -108,18 +114,23 @@ export default function Index() {
 
       {/* Animated Card */}
       <Animated.View
-        style={[
-          styles.card,
-          { transform: [{ translateY: slideAnim }] },
-        ]}
+        style={[styles.card, { transform: [{ translateY: slideAnim }] }]}
       >
         <Text style={styles.title}>Welcome Back</Text>
 
         {/* Employee ID */}
         <View style={styles.inputContainer}>
-          <Feather name="user" size={18} color="#888" />
+          {/* <Feather name="user" size={18} color="#888" /> */}
+          {/* <View style={styles.iconBox}>
+            <Ionicons name="person-outline" size={18} color="#64748B" />
+          </View> */}
+          <View style={styles.iconBoxPro}>
+            <Ionicons name="person-outline" size={18} color="#fff" />
+          </View>
+          {/* Fixed Prefix */}
+          <Text style={styles.prefix}>EMP -</Text>
           <TextInput
-            placeholder="EMP-1605"
+            placeholder="1605"
             placeholderTextColor="#999"
             style={styles.input}
             value={employeeId}
@@ -130,7 +141,10 @@ export default function Index() {
 
         {/* Password */}
         <View style={styles.inputContainer}>
-          <Feather name="lock" size={18} color="#888" />
+          {/* <Feather name="lock" size={18} color="#888" /> */}
+          <View style={styles.iconBoxPro}>
+            <Ionicons name="lock-closed-outline" size={18} color="#fff" />
+          </View>
           <TextInput
             placeholder="••••••••"
             placeholderTextColor="#999"
@@ -140,11 +154,7 @@ export default function Index() {
             onChangeText={setPassword}
           />
           <TouchableOpacity onPress={() => setSecure(!secure)}>
-            <Feather
-              name={secure ? "eye-off" : "eye"}
-              size={18}
-              color="#888"
-            />
+            <Feather name={secure ? "eye-off" : "eye"} size={18} color="#888" />
           </TouchableOpacity>
         </View>
 
@@ -153,8 +163,8 @@ export default function Index() {
         </TouchableOpacity>
 
         {/* Login Button */}
-        <TouchableOpacity 
-          style={[styles.button, loading && { opacity: 0.7 }]} 
+        <TouchableOpacity
+          style={[styles.button, loading && { opacity: 0.7 }]}
           onPress={handleLogin}
           disabled={loading}
         >
@@ -173,6 +183,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#E5E7EB",
+  },
+  prefix: {
+    color: "#888",
+    fontWeight: "600",
+    marginRight: -10,
+    marginLeft: 11,
+  },
+  iconBoxPro: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "#0A2540",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  iconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "#E2E8F0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
   },
   topSection: {
     height: 250,
