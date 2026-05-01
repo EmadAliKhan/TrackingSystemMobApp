@@ -147,8 +147,10 @@
 //     alignItems: "center",
 //   },
 // });
+import { db } from "@/firebase/firebaseConfig";
 import * as Location from "expo-location";
 import { router, useLocalSearchParams } from "expo-router";
+import { ref, set } from "firebase/database";
 import React, { useEffect, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
@@ -246,6 +248,12 @@ export default function MapScreen() {
 
           // 🔥 CONSOLE LOG
           console.log("📍 USER COORDS:", coords);
+          set(ref(db, `liveLocations/${1233}`), {
+            lat: coords.latitude,
+            lng: coords.longitude,
+            taskId: "2",
+            updatedAt: Date.now(),
+          });
           // 🔥 Trail me add karo (but duplicate avoid karo)
           setTrail((prev) => {
             if (
@@ -286,6 +294,11 @@ export default function MapScreen() {
 
     return () => clearInterval(interval);
   }, [isRunning]);
+  useEffect(() => {
+    // 🔁 jab new task aaye (stops change)
+    setSeconds(0); // reset timer
+    setIsRunning(true); // start again
+  }, [params.stops]);
   const formatTime = (sec: number) => {
     const mins = Math.floor(sec / 60);
     const secs = sec % 60;
@@ -346,8 +359,20 @@ export default function MapScreen() {
       {/* COMPLETE BUTTON */}
       <TouchableOpacity
         style={styles.btn}
+        // onPress={() => {
+        //   setIsRunning(false);
+        //   router.replace("/dashboard");
+        // }}
         onPress={() => {
           setIsRunning(false);
+
+          console.log("⏱ Task Completed Time (seconds):", seconds);
+
+          const mins = Math.floor(seconds / 60);
+          const secs = seconds % 60;
+
+          console.log(`⏱ Total Time: ${mins} min ${secs} sec`);
+
           router.replace("/dashboard");
         }}
       >

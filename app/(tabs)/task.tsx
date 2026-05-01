@@ -128,6 +128,8 @@ export default function TaskManagement() {
   //   }
   // };
   const handleAccept = async (task: Task) => {
+    console.log("Accepting Task:", task.TaskNo);
+    console.log("userId:", userId);
     try {
       const response = await fetch(API_BASE, {
         method: "PUT",
@@ -138,15 +140,18 @@ export default function TaskManagement() {
           userId: userId,
         }),
       });
-
+      // console.log("Accept Response:", response);
+      const data = await response.json();
+      console.log("Accept Response Data:", data);
       if (response.ok) {
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.TaskNo === task.TaskNo
-              ? { ...t, status: "accepted" as const }
-              : t,
-          ),
-        );
+        // setTasks((prev) =>
+        //   prev.map((t) =>
+        //     t.TaskNo === task.TaskNo
+        //       ? { ...t, status: "accepted" as const }
+        //       : t,
+        //   ),
+        // );
+        console.log("Task accepted! Navigating to map...", response);
 
         // 🔥 DIRECT MAP OPEN
         // router.push({
