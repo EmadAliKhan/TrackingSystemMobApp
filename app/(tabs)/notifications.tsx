@@ -303,26 +303,29 @@ import {
   View,
 } from "react-native";
 
-import { AppNotification, useNotifications } from "../context/NotificationContext";
+import {
+  AppNotification,
+  useNotifications,
+} from "../context/NotificationContext";
 
 // ── Time helper ───────────────────────────────────────────────────────────────
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1)  return "just now";
+  if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24)  return `${hrs}h ago`;
+  if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
 // ── Icon + colour per notification type ──────────────────────────────────────
 function notifStyle(type: AppNotification["type"]) {
   if (type === "task_assigned" || type === "task_completed")
-    return { icon: "mail-unread" as const,  color: "#3B82F6", bg: "#3B82F620" };
+    return { icon: "mail-unread" as const, color: "#3B82F6", bg: "#3B82F620" };
   if (type === "reward_earned")
-    return { icon: "trophy"     as const,  color: "#F59E0B", bg: "#F59E0B20" };
-  return   { icon: "notifications" as const, color: "#6B7280", bg: "#6B728020" };
+    return { icon: "trophy" as const, color: "#F59E0B", bg: "#F59E0B20" };
+  return { icon: "notifications" as const, color: "#6B7280", bg: "#6B728020" };
 }
 
 // ── Single card ───────────────────────────────────────────────────────────────
@@ -347,7 +350,12 @@ function NotifCard({
           <Text style={[s.title, isUnread && s.titleUnread]} numberOfLines={1}>
             {item.title}
           </Text>
-          <Text style={[s.time, isUnread && { color: "#3B82F6", fontWeight: "bold" }]}>
+          <Text
+            style={[
+              s.time,
+              isUnread && { color: "#3B82F6", fontWeight: "bold" },
+            ]}
+          >
             {timeAgo(item.createdAt)}
           </Text>
         </View>
@@ -363,8 +371,14 @@ function NotifCard({
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function NotificationScreen() {
-  const { notifications, unreadCount, loading, refresh, markRead, markAllRead } =
-    useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    refresh,
+    markRead,
+    markAllRead,
+  } = useNotifications();
 
   const handlePress = async (item: AppNotification) => {
     // Mark as read first
@@ -391,7 +405,11 @@ export default function NotificationScreen() {
       )}
 
       {loading ? (
-        <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 50 }} />
+        <ActivityIndicator
+          size="large"
+          color="#3B82F6"
+          style={{ marginTop: 50 }}
+        />
       ) : (
         <FlatList
           data={notifications}
@@ -409,7 +427,11 @@ export default function NotificationScreen() {
           }
           ListEmptyComponent={
             <View style={s.emptyBox}>
-              <Ionicons name="notifications-off-outline" size={50} color="#1E3A5F" />
+              <Ionicons
+                name="notifications-off-outline"
+                size={50}
+                color="#1E3A5F"
+              />
               <Text style={s.emptyTxt}>No notifications yet.</Text>
             </View>
           }
@@ -426,88 +448,88 @@ const s = StyleSheet.create({
     backgroundColor: "#F8FAFC",
   },
   topBar: {
-    flexDirection:     "row",
-    justifyContent:    "space-between",
-    alignItems:        "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop:        14,
-    paddingBottom:     4,
+    paddingTop: 14,
+    paddingBottom: 4,
   },
   unreadLabel: {
-    color:      "#3B82F6",
-    fontSize:   12,
+    color: "#3B82F6",
+    fontSize: 12,
     fontWeight: "600",
   },
   markAllBtn: {
     paddingHorizontal: 12,
-    paddingVertical:   6,
-    backgroundColor:   "#EFF6FF",
-    borderRadius:      10,
+    paddingVertical: 6,
+    backgroundColor: "#EFF6FF",
+    borderRadius: 10,
   },
   markAllTxt: {
-    color:      "#3B82F6",
-    fontSize:   12,
+    color: "#3B82F6",
+    fontSize: 12,
     fontWeight: "600",
   },
   card: {
     backgroundColor: "#FFFFFF",
-    borderRadius:    16,
-    padding:         14,
-    flexDirection:   "row",
-    alignItems:      "center",
-    marginBottom:    12,
-    shadowColor:     "#000",
-    shadowOffset:    { width: 0, height: 3 },
-    shadowOpacity:   0.06,
-    shadowRadius:    6,
-    elevation:       2,
+    borderRadius: 16,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   iconCircle: {
-    width:           44,
-    height:          44,
-    borderRadius:    22,
-    justifyContent:  "center",
-    alignItems:      "center",
-    marginRight:     12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
   },
   textContainer: { flex: 1 },
   row: {
-    flexDirection:  "row",
+    flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom:   4,
+    marginBottom: 4,
   },
   title: {
-    color:      "#0A2540",
+    color: "#0A2540",
     fontWeight: "bold",
-    fontSize:   14,
-    flex:       1,
+    fontSize: 14,
+    flex: 1,
     marginRight: 8,
   },
   titleUnread: {
     color: "#0A2540",
   },
   time: {
-    color:    "#94A3B8",
+    color: "#94A3B8",
     fontSize: 10,
   },
   message: {
-    color:      "#64748B",
-    fontSize:   12,
+    color: "#64748B",
+    fontSize: 12,
     lineHeight: 18,
   },
   unreadDot: {
-    width:           8,
-    height:          8,
-    borderRadius:    4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: "#3B82F6",
-    marginLeft:      10,
+    marginLeft: 10,
   },
   emptyBox: {
-    alignItems:  "center",
-    marginTop:   120,
+    alignItems: "center",
+    marginTop: 120,
   },
   emptyTxt: {
-    color:    "#94A3B8",
+    color: "#94A3B8",
     marginTop: 10,
   },
 });
