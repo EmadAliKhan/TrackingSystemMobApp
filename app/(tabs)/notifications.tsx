@@ -294,7 +294,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import {
-  ActivityIndicator,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -303,6 +302,7 @@ import {
   View,
 } from "react-native";
 
+import Loader from "../components/Loader";
 import {
   AppNotification,
   useNotifications,
@@ -405,11 +405,12 @@ export default function NotificationScreen() {
       )}
 
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#3B82F6"
-          style={{ marginTop: 50 }}
-        />
+        // <ActivityIndicator
+        //   size="large"
+        //   color="#3B82F6"
+        //   style={{ marginTop: 50 }}
+        // />
+        <Loader />
       ) : (
         <FlatList
           data={notifications}

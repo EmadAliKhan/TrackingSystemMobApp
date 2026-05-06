@@ -379,7 +379,13 @@ const Dashboard = () => {
     checkUser();
     checkLocationStatus();
   }, []);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkLocationStatus();
+    }, 3000); // every 3 sec
 
+    return () => clearInterval(interval);
+  }, []);
   const stats: DashboardStat[] = [
     { title: "Rewards", value: reward, icon: "gift-outline", color: "#8B5CF6" },
     {

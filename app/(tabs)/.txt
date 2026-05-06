@@ -1,0 +1,81 @@
+ <Tabs.Screen
+        name="chat"
+        options={{
+          tabBarIcon: () => null,
+          tabBarButton: (props) => {
+            const { style, delayLongPress, disabled, ...rest } = props;
+
+            return (
+              <TouchableOpacity
+                {...rest}
+                disabled={disabled ?? false} // ✅ FIX
+                activeOpacity={0.85}
+                delayLongPress={delayLongPress ?? undefined}
+                onPress={() => router.push("/chat")}
+                style={[style, styles.fabButton]}
+              >
+                <View style={styles.fabInner}>
+                  <Ionicons name="chatbubble-ellipses" size={28} color="#fff" />
+                </View>
+              </TouchableOpacity>
+            );
+          },
+        }}
+      />
+
+
+      const styles = StyleSheet.create({
+  tabBar: {
+    backgroundColor: "#0A2540",
+    height: 70,
+    borderTopWidth: 0,
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -3 },
+  },
+  fabButton: {
+    top: -25,
+    width: 70,
+    height: 70,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fabInner: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "#3B82F6",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10,
+  },
+  iconWithBadge: {
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  badge: {
+    position: "absolute",
+    top: -6,
+    right: -10,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: "#EF4444",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+});

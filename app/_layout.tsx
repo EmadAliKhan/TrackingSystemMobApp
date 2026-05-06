@@ -45,8 +45,8 @@
 //     </Stack>
 //   );
 // }
-import { NotificationProvider } from "./context/NotificationContext";
 import { Stack } from "expo-router";
+import { NotificationProvider } from "./context/NotificationContext";
 
 export default function RootLayout() {
   return (

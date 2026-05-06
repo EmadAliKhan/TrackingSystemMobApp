@@ -4,15 +4,15 @@ import { router } from "expo-router";
 import { jwtDecode } from "jwt-decode";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import Loader from "../components/Loader";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -220,9 +220,10 @@ export default function Rewards() {
 
   if (loading)
     return (
-      <View style={[sc.screen, sc.center]}>
-        <ActivityIndicator color="#3B82F6" size="large" />
-      </View>
+      // <View style={[sc.screen, sc.center]}>
+      //   <ActivityIndicator color="#3B82F6" size="large" />
+      // </View>
+      <Loader />
     );
 
   return (
