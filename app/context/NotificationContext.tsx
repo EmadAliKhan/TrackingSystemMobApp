@@ -108,6 +108,7 @@ export function NotificationProvider({
     try {
       const res = await fetch(`${API_BASE}?userId=${uid}`);
       const json = await res.json();
+      console.log("Notification json", json);
       if (res.ok) {
         setNotifications(json.notifications || []);
         setUnreadCount(json.unreadCount || 0);
