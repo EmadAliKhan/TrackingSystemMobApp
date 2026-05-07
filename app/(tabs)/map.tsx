@@ -150,7 +150,7 @@ export default function MapScreen() {
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
   const router = useRouter();
-
+  const [isNearDestination, setIsNearDestination] = useState(false);
   const userId = (params.userId as string) || "";
   const taskId = (params.taskId as string) || "";
   const TaskNo = (params.taskNo as string) || "";
@@ -158,6 +158,7 @@ export default function MapScreen() {
   const TURN_DEG = 8;
 
   const stops = params.stops ? JSON.parse(params.stops as string) : [];
+  const finalStop = stops[stops.length - 1];
 
   // ── Fetch planned route ───────────────────────────────────────────────────
   const fetchRoute = async (currentLocation?: {
@@ -227,7 +228,13 @@ export default function MapScreen() {
           };
 
           setUserLocation(coords);
+          // Check if user is within 10 meters of final destination
+          const distanceToDestination = haversineDistance(coords, {
+            latitude: finalStop.lat,
+            longitude: finalStop.lng,
+          });
 
+          setIsNearDestination(distanceToDestination <= 10);
           // 1. Update live position (manager sees dot move)
           if (userId) {
             writeLocationToFirebase(userId, coords, taskId);
@@ -483,9 +490,23 @@ export default function MapScreen() {
         <Text style={styles.timerText}>⏱ {formatTime(seconds)}</Text>
       </View>
 
-      <TouchableOpacity style={styles.btn} onPress={handleComplete}>
+      {/* <TouchableOpacity style={styles.btn} onPress={handleComplete}>
         <Text style={{ color: "#fff", fontWeight: "bold" }}>
           Mark as Completed
+        </Text>
+      </TouchableOpacity> */}
+      <TouchableOpacity
+        style={[
+          styles.btn,
+          !isNearDestination && { backgroundColor: "#9CA3AF" },
+        ]}
+        onPress={handleComplete}
+        disabled={!isNearDestination}
+      >
+        <Text style={{ color: "#fff", fontWeight: "bold" }}>
+          {isNearDestination
+            ? "Mark as Completed"
+            : "Reach destination to complete"}
         </Text>
       </TouchableOpacity>
     </View>

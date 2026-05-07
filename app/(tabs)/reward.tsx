@@ -225,7 +225,6 @@ export default function Rewards() {
       // </View>
       <Loader />
     );
-
   return (
     <View style={sc.screen}>
       <View style={sc.header}>
