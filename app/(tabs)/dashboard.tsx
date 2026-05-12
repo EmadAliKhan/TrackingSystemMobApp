@@ -6,13 +6,13 @@ import { jwtDecode } from "jwt-decode";
 import React, { useEffect, useState } from "react";
 
 import {
-  Alert,
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Dimensions,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -40,7 +40,7 @@ const Dashboard = () => {
   const [rejectedTask, setRejectedTask] = useState("");
   const [completedTask, setCompletedTask] = useState("");
   const [hasNewNotifications, setHasNewNotifications] = useState(true);
-  const API_BASE = "https://fyp-coral.vercel.app/api/dashboardData";
+  const API_BASE = "https://bawdicsoft-coral.vercel.app/api/dashboardData";
   const [locationEnabled, setLocationEnabled] = useState(false);
   const checkLocationStatus = async () => {
     try {

@@ -72,7 +72,7 @@ export default function ResetPassword() {
       setLoading(true);
       console.log("reset Data", email, otp, newPass);
       const res = await fetch(
-        "https://fyp-coral.vercel.app/api/accounts/employee/changePassword/resetPassword",
+        "https://bawdicsoft-coral.vercel.app/api/accounts/employee/changePassword/resetPassword",
         {
           method: "POST",
           headers: {

@@ -3,14 +3,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Animated,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Animated,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 export default function Index() {
@@ -57,7 +57,7 @@ export default function Index() {
 
     try {
       const response = await fetch(
-        "https://fyp-coral.vercel.app/api/accounts/employee/login",
+        "https://bawdicsoft-coral.vercel.app/api/accounts/employee/login",
         {
           method: "POST",
           headers: {

@@ -17,7 +17,7 @@ import React, {
 } from "react";
 
 // const API_BASE = "http://10.114.117.145:3000/api/notifications";
-const API_BASE = "https://fyp-coral.vercel.app/api/notifications";
+const API_BASE = "https://bawdicsoft-coral.vercel.app/api/notifications";
 
 const POLL_MS = 10000; // 10 seconds
 

@@ -349,7 +349,7 @@ export default function MapScreen() {
 
   //   // 3. Call your PUT API
   //   try {
-  //     // const API_BASE = "https://fyp-coral.vercel.app/api/tasks"; // or your local IP
+  //     // const API_BASE = "https://bawdicsoft-coral.vercel.app/api/tasks"; // or your local IP
   //     const API_BASE = "http://192.168.3.103:3000/api/tasks"; // or your local IP
   //     await fetch(API_BASE, {
   //       method: "PUT",
@@ -403,7 +403,7 @@ export default function MapScreen() {
     // 2. Call API with captured seconds
     try {
       // const API_BASE = "http://10.114.117.145:3000/api/tasks";
-      const API_BASE = "https://fyp-coral.vercel.app/api/tasks";
+      const API_BASE = "https://bawdicsoft-coral.vercel.app/api/tasks";
 
       await fetch(API_BASE, {
         method: "PUT",

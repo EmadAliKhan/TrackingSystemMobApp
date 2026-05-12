@@ -52,7 +52,7 @@ export default function EmailScreen() {
     setLoading(true);
     try {
       const response = await fetch(
-        "https://fyp-coral.vercel.app/api/accounts/employee/changePassword/sendOtp",
+        "https://bawdicsoft-coral.vercel.app/api/accounts/employee/changePassword/sendOtp",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

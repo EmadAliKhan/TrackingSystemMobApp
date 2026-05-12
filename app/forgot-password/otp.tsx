@@ -2,16 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Animated,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Animated,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 export default function OtpScreen() {
@@ -30,9 +30,21 @@ export default function OtpScreen() {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.spring(slideAnim, { toValue: 0, friction: 6, useNativeDriver: true }),
-      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-      Animated.spring(logoScale, { toValue: 1, friction: 5, useNativeDriver: true }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        friction: 6,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(logoScale, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
@@ -75,14 +87,14 @@ export default function OtpScreen() {
       setLoading(true);
 
       const res = await fetch(
-        "https://fyp-coral.vercel.app/api/accounts/employee/changePassword/verifyOtp",
+        "https://bawdicsoft-coral.vercel.app/api/accounts/employee/changePassword/verifyOtp",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email, otp: finalOtp }),
-        }
+        },
       );
 
       const data = await res.json();
@@ -95,7 +107,6 @@ export default function OtpScreen() {
         pathname: "/forgot-password/reset",
         params: { email, otp: finalOtp },
       });
-
     } catch (err: any) {
       Alert.alert("Error", err.message || "Verification failed");
     } finally {
@@ -109,14 +120,14 @@ export default function OtpScreen() {
       setLoading(true);
 
       const res = await fetch(
-        "https://fyp-coral.vercel.app/api/accounts/employee/changePassword/sendOtp",
+        "https://bawdicsoft-coral.vercel.app/api/accounts/employee/changePassword/sendOtp",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email }),
-        }
+        },
       );
 
       const data = await res.json();
@@ -130,7 +141,6 @@ export default function OtpScreen() {
       inputs.current[0]?.focus();
 
       Alert.alert("Success", "OTP resent to your email 📩");
-
     } catch (err: any) {
       Alert.alert("Error", err.message || "Resend failed");
     } finally {
@@ -150,7 +160,9 @@ export default function OtpScreen() {
     >
       {/* HEADER */}
       <View style={styles.topSection}>
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: logoScale }] }}>
+        <Animated.View
+          style={{ opacity: fadeAnim, transform: [{ scale: logoScale }] }}
+        >
           <View style={styles.iconCircle}>
             <Ionicons name="mail-open" size={36} color="#0A2540" />
           </View>
@@ -158,7 +170,9 @@ export default function OtpScreen() {
       </View>
 
       {/* CARD */}
-      <Animated.View style={[styles.card, { transform: [{ translateY: slideAnim }] }]}>
+      <Animated.View
+        style={[styles.card, { transform: [{ translateY: slideAnim }] }]}
+      >
         <Text style={styles.title}>Verify OTP</Text>
 
         <Text style={styles.subtitle}>
@@ -170,10 +184,7 @@ export default function OtpScreen() {
           {otp.map((digit, index) => (
             <TextInput
               key={index}
-              style={[
-                styles.otpInput,
-                digit !== "" && styles.otpInputFilled,
-              ]}
+              style={[styles.otpInput, digit !== "" && styles.otpInputFilled]}
               keyboardType="number-pad"
               maxLength={1}
               value={digit}

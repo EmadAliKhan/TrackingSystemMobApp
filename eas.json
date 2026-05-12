@@ -3,7 +3,7 @@
     "name": "MyApp",
     "slug": "my-app",
     "android": {
-      "package": "https://fyp-coral.vercel.app"
+      "package": "https://bawdicsoft-coral.vercel.app"
     }
   }
 }
