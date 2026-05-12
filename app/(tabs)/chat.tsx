@@ -208,7 +208,7 @@ export default function ChatScreen() {
       const data = await res.json();
 
       const formatted = data.data.map((msg: any) => formatMessage(msg));
-      console.log("formated Messages", formatted);
+      // console.log("formated Messages", formatted);
       setMessages(formatted);
     } catch (err) {
       console.log(err);

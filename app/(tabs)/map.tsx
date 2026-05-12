@@ -20,11 +20,11 @@ const writeLocationToFirebase = async (
       timestamp: Date.now(),
       active: true,
     });
-    console.log("Firebase location updated:", {
-      lat: coords.latitude,
-      lng: coords.longitude,
-      taskId: taskId || null,
-    });
+    // console.log("Firebase location updated:", {
+    //   lat: coords.latitude,
+    //   lng: coords.longitude,
+    //   taskId: taskId || null,
+    // });
   } catch (e) {
     console.log("Firebase write error:", e);
   }
@@ -46,11 +46,11 @@ const appendCoordToHistory = async (
       taskId: taskId || null,
       timestamp: Date.now(),
     });
-    console.log("Firebase location updated:", {
-      lat: coords.latitude,
-      lng: coords.longitude,
-      taskId: taskId || null,
-    });
+    // console.log("Firebase location updated:", {
+    //   lat: coords.latitude,
+    //   lng: coords.longitude,
+    //   taskId: taskId || null,
+    // });
   } catch (e) {
     console.log("Firebase history write error:", e);
   }

@@ -74,7 +74,7 @@ export default function Index() {
 
       if (response.ok) {
         // Success: Navigate to dashboard
-        console.log("Login success 🚀 Token:", data.token);
+        // console.log("Login success 🚀 Token:", data.token);
 
         // Optional: Save token to SecureStore/AsyncStorage here
         AsyncStorage.setItem("token", data.token);
@@ -86,7 +86,7 @@ export default function Index() {
       }
     } catch (error) {
       // Network or Server issues
-      console.error("Network error:", error);
+      // console.error("Network error:", error);
       Alert.alert(
         "Connection Error",
         "Make sure you are connected to the internet.",

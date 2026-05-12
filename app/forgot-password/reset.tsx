@@ -2,16 +2,16 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Animated,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Animated,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 export default function ResetPassword() {
@@ -33,9 +33,21 @@ export default function ResetPassword() {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.spring(slideAnim, { toValue: 0, friction: 6, useNativeDriver: true }),
-      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-      Animated.spring(logoScale, { toValue: 1, friction: 5, useNativeDriver: true }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        friction: 6,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(logoScale, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
@@ -58,7 +70,7 @@ export default function ResetPassword() {
 
     try {
       setLoading(true);
-        console.log("reset Data",email, otp, newPass)
+      console.log("reset Data", email, otp, newPass);
       const res = await fetch(
         "https://fyp-coral.vercel.app/api/accounts/employee/changePassword/resetPassword",
         {
@@ -71,11 +83,11 @@ export default function ResetPassword() {
             otp,
             newPassword: newPass,
           }),
-        }
+        },
       );
 
       const data = await res.json();
-      console.log("data change",data)
+      console.log("data change", data);
       if (!res.ok) {
         throw new Error(data.message || "Reset failed");
       }
@@ -100,7 +112,9 @@ export default function ResetPassword() {
     >
       {/* HEADER */}
       <View style={styles.topSection}>
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: logoScale }] }}>
+        <Animated.View
+          style={{ opacity: fadeAnim, transform: [{ scale: logoScale }] }}
+        >
           <View style={styles.iconCircle}>
             <Ionicons name="lock-open" size={40} color="#0A2540" />
           </View>
@@ -108,7 +122,9 @@ export default function ResetPassword() {
       </View>
 
       {/* CARD */}
-      <Animated.View style={[styles.card, { transform: [{ translateY: slideAnim }] }]}>
+      <Animated.View
+        style={[styles.card, { transform: [{ translateY: slideAnim }] }]}
+      >
         <Text style={styles.title}>Reset Password</Text>
 
         <Text style={styles.subtitle}>
@@ -127,7 +143,11 @@ export default function ResetPassword() {
             onChangeText={setNewPass}
           />
           <TouchableOpacity onPress={() => setSecureNew(!secureNew)}>
-            <Feather name={secureNew ? "eye-off" : "eye"} size={18} color="#888" />
+            <Feather
+              name={secureNew ? "eye-off" : "eye"}
+              size={18}
+              color="#888"
+            />
           </TouchableOpacity>
         </View>
 
@@ -143,7 +163,11 @@ export default function ResetPassword() {
             onChangeText={setConfirmPass}
           />
           <TouchableOpacity onPress={() => setSecureConfirm(!secureConfirm)}>
-            <Feather name={secureConfirm ? "eye-off" : "eye"} size={18} color="#888" />
+            <Feather
+              name={secureConfirm ? "eye-off" : "eye"}
+              size={18}
+              color="#888"
+            />
           </TouchableOpacity>
         </View>
 
@@ -161,7 +185,10 @@ export default function ResetPassword() {
         </TouchableOpacity>
 
         {/* BACK */}
-        <TouchableOpacity onPress={() => router.replace("/forgot-password/otp")} style={styles.cancelLink}>
+        <TouchableOpacity
+          onPress={() => router.replace("/forgot-password/otp")}
+          style={styles.cancelLink}
+        >
           <Text style={styles.cancelText}>Back</Text>
         </TouchableOpacity>
       </Animated.View>

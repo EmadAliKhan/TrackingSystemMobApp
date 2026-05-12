@@ -5,15 +5,15 @@ import * as ImagePicker from "expo-image-picker";
 import { jwtDecode } from "jwt-decode";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  Image,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Image,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 /* ✅ CUSTOM USER TYPE */

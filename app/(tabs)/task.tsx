@@ -201,8 +201,8 @@ export default function TaskManagement() {
   //   }
   // };
   const handleAccept = async (task: Task) => {
-    console.log("────────────────────────────");
-    console.log(`Attempting to accept Task #${task.TaskNo}...`);
+    // console.log("────────────────────────────");
+    // console.log(`Attempting to accept Task #${task.TaskNo}...`);
     // 🔐 LOCK CHECK
     if (isTaskLocked(task)) {
       Alert.alert("Locked 🔒", "Complete previous task first!");
@@ -229,12 +229,12 @@ export default function TaskManagement() {
               : t,
           ),
         );
-        console.log(
-          "Task accepted:",
-          task.originCoords,
-          task.destinationCoords,
-          task.officeCoords,
-        );
+        // console.log(
+        //   "Task accepted:",
+        //   task.originCoords,
+        //   task.destinationCoords,
+        //   task.officeCoords,
+        // );
 
         router.push({
           pathname: "/map",
@@ -410,17 +410,17 @@ export default function TaskManagement() {
   //   </View>
   // );
   const renderItem = ({ item }: { item: Task }) => {
-    // 🔥 DEBUG LOGS (Console me data dekhne ke liye)
-    console.log("────────────────────────────");
-    console.log(`🧾 TASK #${item.TaskNo}`);
-    console.log("Status:", item.status);
-    console.log("Distance:", item.distance);
-    console.log("Total Distance:", item.totalDistance);
-    console.log("Estimated Time:", item.estimatedTime);
-    console.log("Origin Coords:", item.originCoords);
-    console.log("Destination Coords:", item.destinationCoords);
-    console.log("Office Coords:", item.officeCoords);
-    console.log("────────────────────────────");
+    // 🔥 DEBUG LOGS (console me data dekhne ke liye)
+    // console.log("────────────────────────────");
+    // console.log(`🧾 TASK #${item.TaskNo}`);
+    // console.log("Status:", item.status);
+    // console.log("Distance:", item.distance);
+    // console.log("Total Distance:", item.totalDistance);
+    // console.log("Estimated Time:", item.estimatedTime);
+    // console.log("Origin Coords:", item.originCoords);
+    // console.log("Destination Coords:", item.destinationCoords);
+    // console.log("Office Coords:", item.officeCoords);
+    // console.log("────────────────────────────");
 
     return (
       <View style={s.card}>

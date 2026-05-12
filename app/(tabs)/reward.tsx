@@ -4,13 +4,13 @@ import { router } from "expo-router";
 import { jwtDecode } from "jwt-decode";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Alert,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Loader from "../components/Loader";
 
@@ -45,7 +45,7 @@ const API_BASE = "https://fyp-coral.vercel.app/api/tasks";
 const fetchStats = async (userId: string): Promise<TaskStats> => {
   const res = await fetch(`${API_BASE}?userId=${userId}`);
   const data = await res.json();
-  console.log("data reward", data);
+  // console.log("data reward", data);
 
   if (!res.ok) throw new Error(data.error || "Failed to fetch");
 
@@ -192,7 +192,7 @@ export default function Rewards() {
         // Explicitly typing the decoded token
         const decoded = jwtDecode<UserProfile>(token);
         // setProfileData(decoded);
-        console.log("Decoded Token:", decoded);
+        // console.log("Decoded Token:", decoded);
         const s = await fetchStats(decoded?.userId || "");
         setStats(s);
         // console.log("Decoded Id:", decoded.userId || "");

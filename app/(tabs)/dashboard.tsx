@@ -46,7 +46,7 @@ const Dashboard = () => {
     try {
       // Permission check
       const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log(status);
+      // console.log(status);
       if (status !== "granted") {
         setLocationEnabled(false);
         return;
@@ -62,12 +62,12 @@ const Dashboard = () => {
     }
   };
   const getData = async (userId: String) => {
-    console.log(userId);
+    // console.log(userId);
 
     const data = await fetch(`${API_BASE}?userId=${userId}`);
     // console.log("data", await data.json());
     let response = await data.json();
-    console.log("response", response?.tasks);
+    // console.log("response", response?.tasks);
     setPendingTask(response?.tasks?.pending);
     setReward(response?.reward);
     setRejectedTask(response?.tasks?.rejected);
@@ -82,10 +82,10 @@ const Dashboard = () => {
         if (token) {
           const decoded = jwtDecode<UserProfile>(token);
           setProfileData(decoded);
-          console.log("decoded", decoded);
+          // console.log("decoded", decoded);
           userId = decoded?.userId;
           getData(userId || "");
-          console.log("decoded login", decoded?.login);
+          // console.log("decoded login", decoded?.login);
           if (decoded?.login === false) {
             Alert.alert(
               "Action Required 🔒",

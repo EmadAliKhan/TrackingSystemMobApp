@@ -294,18 +294,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import {
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import Loader from "../components/Loader";
 import {
-  AppNotification,
-  useNotifications,
+    AppNotification,
+    useNotifications,
 } from "../context/NotificationContext";
 
 // ── Time helper ───────────────────────────────────────────────────────────────
