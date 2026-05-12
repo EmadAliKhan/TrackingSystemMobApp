@@ -70,42 +70,69 @@ export function NotificationProvider({
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userId, setUserId] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Get userId from the same JWT your login stores
+  // useEffect(() => {
+  //   AsyncStorage.getItem("token").then((token) => {
+  //     if (!token) return;
+  //     try {
+  //       const decoded = jwtDecode<JwtPayload>(token);
+  //       if (decoded.userId) setUserId(decoded?.userId);
+  //     } catch (e) {
+  //       console.error("NotificationContext: decode failed", e);
+  //     }
+  //   });
+  // }, []);
+
+  // // In the useEffect where you decode the token — add the console.log:
+  // useEffect(() => {
+  //   AsyncStorage.getItem("token").then((token) => {
+  //     if (!token) return;
+  //     try {
+  //       const decoded = jwtDecode<JwtPayload>(token);
+
+  //       console.log("🔍 DECODED TOKEN:", JSON.stringify(decoded)); // ← ADD THIS
+  //       console.log("🔍 userId value:", decoded.userId); // ← ADD THIS
+
+  //       if (decoded.userId) setUserId(decoded.userId);
+  //     } catch (e) {
+  //       console.error("NotificationContext: decode failed", e);
+  //     }
+  //   });
+  // }, []);
   useEffect(() => {
-    AsyncStorage.getItem("token").then((token) => {
-      if (!token) return;
+    const loadUser = async () => {
       try {
+        const token = await AsyncStorage.getItem("token");
+
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
         const decoded = jwtDecode<JwtPayload>(token);
-        if (decoded.userId) setUserId(decoded?.userId);
+
+        console.log("🔍 userId:", decoded.userId);
+
+        if (decoded.userId) {
+          setUserId(decoded.userId);
+        }
       } catch (e) {
         console.error("NotificationContext: decode failed", e);
+        setLoading(false);
       }
-    });
-  }, []);
+    };
 
-  // In the useEffect where you decode the token — add the console.log:
-  useEffect(() => {
-    AsyncStorage.getItem("token").then((token) => {
-      if (!token) return;
-      try {
-        const decoded = jwtDecode<JwtPayload>(token);
-
-        console.log("🔍 DECODED TOKEN:", JSON.stringify(decoded)); // ← ADD THIS
-        console.log("🔍 userId value:", decoded.userId); // ← ADD THIS
-
-        if (decoded.userId) setUserId(decoded.userId);
-      } catch (e) {
-        console.error("NotificationContext: decode failed", e);
-      }
-    });
+    loadUser();
   }, []);
 
   const fetchNotifications = useCallback(async (uid: string) => {
     if (!uid) return;
+    console.log("Fetching notifications for userId:", uid);
     try {
+      setLoading(true);
       const res = await fetch(`${API_BASE}?userId=${uid}`);
       const json = await res.json();
       console.log("Notification json", json);
@@ -113,8 +140,8 @@ export function NotificationProvider({
         setNotifications(json.notifications || []);
         setUnreadCount(json.unreadCount || 0);
       }
-    } catch {
-      // silent — retry on next poll
+    } catch (e) {
+      console.log("Notification fetch error", e);
     } finally {
       setLoading(false);
     }

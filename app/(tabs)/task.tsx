@@ -201,6 +201,8 @@ export default function TaskManagement() {
   //   }
   // };
   const handleAccept = async (task: Task) => {
+    console.log("────────────────────────────");
+    console.log(`Attempting to accept Task #${task.TaskNo}...`);
     // 🔐 LOCK CHECK
     if (isTaskLocked(task)) {
       Alert.alert("Locked 🔒", "Complete previous task first!");

@@ -79,12 +79,36 @@ export default function ChatScreen() {
 
     return d;
   };
-  const groupMessagesByDate = (messages: any[]) => {
-    const grouped: any[] = [];
+  // const groupMessagesByDate = (messages: any[]) => {
+  //   const grouped: any[] = [];
 
+  //   let lastDate = "";
+
+  //   messages.forEach((msg) => {
+  //     const dateLabel = getDateLabel(msg.createdAt);
+
+  //     if (dateLabel !== lastDate) {
+  //       grouped.push({
+  //         type: "date",
+  //         id: `date-${dateLabel}`,
+  //         label: dateLabel,
+  //       });
+  //       lastDate = dateLabel;
+  //     }
+
+  //     grouped.push({
+  //       type: "message",
+  //       ...msg,
+  //     });
+  //   });
+
+  //   return grouped;
+  // };
+  const groupedMessages = React.useMemo(() => {
+    const grouped: any[] = [];
     let lastDate = "";
 
-    messages.forEach((msg) => {
+    for (const msg of messages) {
       const dateLabel = getDateLabel(msg.createdAt);
 
       if (dateLabel !== lastDate) {
@@ -96,14 +120,11 @@ export default function ChatScreen() {
         lastDate = dateLabel;
       }
 
-      grouped.push({
-        type: "message",
-        ...msg,
-      });
-    });
+      grouped.push({ type: "message", ...msg });
+    }
 
     return grouped;
-  };
+  }, [messages]);
   /* ================= AUTO SCROLL ================= */
 
   /* ================= FORMAT MESSAGE ================= */
@@ -139,24 +160,38 @@ export default function ChatScreen() {
     };
   };
   /* ================= SOCKET CONNECT ================= */
+  // useEffect(() => {
+  //   socketRef.current = io("https://fypserver-production-3c70.up.railway.app", {
+  //     query: { userId: MY_ID },
+  //     transports: ["websocket"],
+  //   });
+
+  //   socketRef.current.on("connect", () => {
+  //     console.log("🟢 Connected");
+  //   });
+
+  //   socketRef.current.on("receiveMessage", (msg: any) => {
+  //     setMessages((prev) => [...prev, formatMessage(msg)]);
+  //   });
+
+  //   return () => {
+  //     socketRef.current.disconnect();
+  //   };
+  // }, []);
   useEffect(() => {
+    if (!MY_ID) return;
+
     socketRef.current = io("https://fypserver-production-3c70.up.railway.app", {
       query: { userId: MY_ID },
       transports: ["websocket"],
-    });
-
-    socketRef.current.on("connect", () => {
-      console.log("🟢 Connected");
     });
 
     socketRef.current.on("receiveMessage", (msg: any) => {
       setMessages((prev) => [...prev, formatMessage(msg)]);
     });
 
-    return () => {
-      socketRef.current.disconnect();
-    };
-  }, []);
+    return () => socketRef.current?.disconnect();
+  }, [MY_ID]);
   /* ================= LOAD OLD MESSAGES ================= */
   useEffect(() => {
     if (!MY_ID) return;
@@ -306,7 +341,7 @@ export default function ChatScreen() {
   //   );
   // };
 
-  const renderMessage = ({ item }: any) => {
+  const renderMessage = React.useCallback(({ item }: any) => {
     // 🔴 DATE LABEL UI
     if (item.type === "date") {
       return (
@@ -337,7 +372,7 @@ export default function ChatScreen() {
         </View>
       </View>
     );
-  };
+  }, []);
   if (loading) {
     return (
       // <View style={styles.loaderContainer}>
@@ -360,14 +395,25 @@ export default function ChatScreen() {
 
       {/* ================= CHAT ================= */}
 
-      <FlatList
+      {/* <FlatList
         ref={flatListRef}
         // data={messages}
-        data={groupMessagesByDate(messages)}
+        data={groupedMessages}
         renderItem={renderMessage}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 10 }}
         keyboardShouldPersistTaps="handled"
+      /> */}
+      <FlatList
+        ref={flatListRef}
+        data={groupedMessages}
+        renderItem={renderMessage}
+        keyExtractor={(item) => item.id}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews
+        showsVerticalScrollIndicator={false}
       />
 
       {/* ================= INPUT ================= */}

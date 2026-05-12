@@ -13,12 +13,17 @@ const writeLocationToFirebase = async (
   taskId?: string,
 ) => {
   try {
-    await set(ref(db, `employees/${userId}/location`), {
+    await set(ref(db, `employees/${userId}/tasks/${taskId}/location`), {
       lat: coords.latitude,
       lng: coords.longitude,
       taskId: taskId || null,
       timestamp: Date.now(),
       active: true,
+    });
+    console.log("Firebase location updated:", {
+      lat: coords.latitude,
+      lng: coords.longitude,
+      taskId: taskId || null,
     });
   } catch (e) {
     console.log("Firebase write error:", e);
@@ -35,11 +40,16 @@ const appendCoordToHistory = async (
   taskId?: string,
 ) => {
   try {
-    await push(ref(db, `employees/${userId}/history`), {
+    await push(ref(db, `employees/${userId}/tasks/${taskId}/history`), {
       lat: coords.latitude,
       lng: coords.longitude,
       taskId: taskId || null,
       timestamp: Date.now(),
+    });
+    console.log("Firebase location updated:", {
+      lat: coords.latitude,
+      lng: coords.longitude,
+      taskId: taskId || null,
     });
   } catch (e) {
     console.log("Firebase history write error:", e);
@@ -47,9 +57,9 @@ const appendCoordToHistory = async (
 };
 
 // ── Clear active location when employee finishes ──────────────────────────────
-const clearLocationFromFirebase = async (userId: string) => {
+const clearLocationFromFirebase = async (userId: string, taskId: string) => {
   try {
-    await set(ref(db, `employees/${userId}/location`), {
+    await set(ref(db, `employees/${userId}/tasks/${taskId}/location`), {
       lat: null,
       lng: null,
       timestamp: Date.now(),
@@ -156,6 +166,7 @@ export default function MapScreen() {
   const TaskNo = (params.taskNo as string) || "";
   const MIN_DIST_M = 4;
   const TURN_DEG = 8;
+  const [locationSubscription, setLocationSubscription] = useState<any>(null);
 
   const stops = params.stops ? JSON.parse(params.stops as string) : [];
   const finalStop = stops[stops.length - 1];
@@ -236,7 +247,7 @@ export default function MapScreen() {
 
           setIsNearDestination(distanceToDestination <= 10);
           // 1. Update live position (manager sees dot move)
-          if (userId) {
+          if (userId && taskId) {
             writeLocationToFirebase(userId, coords, taskId);
           }
 
@@ -248,7 +259,7 @@ export default function MapScreen() {
 
             // Only save to Firebase history if the employee actually moved
             // This prevents flooding Firebase with duplicate GPS reads
-            if (movedEnough && userId) {
+            if (movedEnough && userId && taskId) {
               appendCoordToHistory(userId, coords, taskId);
             }
 
@@ -279,6 +290,7 @@ export default function MapScreen() {
           fetchRoute(coords);
         },
       );
+      setLocationSubscription(sub);
     })();
 
     fetchRoute();
@@ -378,6 +390,10 @@ export default function MapScreen() {
   // };
 
   const handleComplete = async () => {
+    if (locationSubscription) {
+      locationSubscription.remove();
+    }
+    setIsRunning(false);
     // 1. Save seconds FIRST before setting isRunning false
     const finalCoords = userLocation
       ? { lat: userLocation.latitude, lng: userLocation.longitude }
@@ -387,7 +403,7 @@ export default function MapScreen() {
     // 2. Call API with captured seconds
     try {
       // const API_BASE = "http://10.114.117.145:3000/api/tasks";
-      const API_BASE = "http://fyp-coral.vercel.app/api/tasks";
+      const API_BASE = "https://fyp-coral.vercel.app/api/tasks";
 
       await fetch(API_BASE, {
         method: "PUT",
@@ -405,7 +421,7 @@ export default function MapScreen() {
     }
 
     // 3. Reset state
-    setIsRunning(true);
+
     setSeconds(0);
     setTrail([]);
     setRouteCoords([]);
@@ -413,7 +429,7 @@ export default function MapScreen() {
     setUserLocation(null);
 
     // 4. Clear Firebase
-    if (userId) await clearLocationFromFirebase(userId);
+    if (userId) await clearLocationFromFirebase(userId, taskId);
 
     // 5. Navigate back
     router.replace("/(tabs)/task");
