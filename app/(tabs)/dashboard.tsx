@@ -6,13 +6,13 @@ import { jwtDecode } from "jwt-decode";
 import React, { useEffect, useState } from "react";
 
 import {
-    Alert,
-    Dimensions,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -40,6 +40,7 @@ const Dashboard = () => {
   const [rejectedTask, setRejectedTask] = useState("");
   const [completedTask, setCompletedTask] = useState("");
   const [hasNewNotifications, setHasNewNotifications] = useState(true);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const API_BASE = "https://bawdicsoft-coral.vercel.app/api/dashboardData";
   const [locationEnabled, setLocationEnabled] = useState(false);
   const checkLocationStatus = async () => {
@@ -87,17 +88,7 @@ const Dashboard = () => {
           getData(userId || "");
           // console.log("decoded login", decoded?.login);
           if (decoded?.login === false) {
-            Alert.alert(
-              "Action Required 🔒",
-              "Please update your password first.",
-              [
-                {
-                  text: "Change Password",
-                  onPress: () => router.push("/forgot-password/email"),
-                },
-              ],
-              { cancelable: false },
-            );
+            setShowPasswordModal(true);
           }
         }
       } catch (error) {
@@ -140,6 +131,36 @@ const Dashboard = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <Modal
+        visible={showPasswordModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalIconCircle}>
+              <Ionicons name="lock-closed-outline" size={32} color="#fff" />
+            </View>
+
+            <Text style={styles.modalTitle}>Action Required</Text>
+            <Text style={styles.modalMessage}>
+              Please update your password first to continue accessing the app.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setShowPasswordModal(false);
+                router.push("/forgot-password/email");
+              }}
+            >
+              <Text style={styles.modalButtonText}>Change Password</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
         {/* HEADER */}
         <View style={styles.header}>
@@ -395,5 +416,73 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 10,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(10, 25, 47, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+
+  modalBox: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 28,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+
+  modalIconCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "#0A2540",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#0A2540",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+
+  modalMessage: {
+    fontSize: 15,
+    color: "#64748B",
+    textAlign: "center",
+    lineHeight: 23,
+    marginBottom: 26,
+  },
+
+  modalButton: {
+    width: "100%",
+    backgroundColor: "#0A2540",
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    shadowColor: "#0A2540",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  modalButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
 });

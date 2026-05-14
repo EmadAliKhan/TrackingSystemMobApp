@@ -114,7 +114,7 @@ export function NotificationProvider({
 
         const decoded = jwtDecode<JwtPayload>(token);
 
-        // console.log("🔍 userId:", decoded.userId);
+        console.log("🔍 userId:", decoded.userId);
 
         if (decoded.userId) {
           setUserId(decoded.userId);
@@ -130,12 +130,12 @@ export function NotificationProvider({
 
   const fetchNotifications = useCallback(async (uid: string) => {
     if (!uid) return;
-    // console.log("Fetching notifications for userId:", uid);
+    console.log("Fetching notifications for userId:", uid);
     try {
       setLoading(true);
       const res = await fetch(`${API_BASE}?userId=${uid}`);
       const json = await res.json();
-      // console.log("Notification json", json);
+      console.log("Notification json", json);
       if (res.ok) {
         setNotifications(json.notifications || []);
         setUnreadCount(json.unreadCount || 0);

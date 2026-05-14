@@ -160,9 +160,10 @@ import { router, Tabs } from "expo-router";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native"; // ← add StyleSheet, Text, View
+import { useNotifications } from "../context/NotificationContext";
 
 // ── CHANGE 1: add this import ─────────────────────────────────────────────────
-import { useNotifications } from "../context/NotificationContext";
+// import { useNotifications } from "../context/NotificationContext";
 interface UserProfile {
   name?: string;
   login?: boolean;

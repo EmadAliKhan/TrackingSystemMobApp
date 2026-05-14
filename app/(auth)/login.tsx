@@ -3,14 +3,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Animated,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function Index() {
@@ -18,6 +20,7 @@ export default function Index() {
   const [password, setPassword] = useState<string>("");
   const [secure, setSecure] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
+  const [errorModal, setErrorModal] = useState({ visible: false, message: "" });
 
   // Animations
   const slideAnim = useRef(new Animated.Value(300)).current;
@@ -82,7 +85,11 @@ export default function Index() {
         router.replace("/(tabs)/dashboard");
       } else {
         // API returned an error (e.g., 401 Unauthorized)
-        Alert.alert("Login Failed", data.error || "Invalid credentials");
+        // Alert.alert("Login Failed", data.error || "Invalid credentials");
+        setErrorModal({
+          visible: true,
+          message: data.error || "Login Failed",
+        });
       }
     } catch (error) {
       // Network or Server issues
@@ -98,6 +105,36 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
+      <Modal
+        visible={errorModal.visible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setErrorModal({ visible: false, message: "" })}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setErrorModal({ visible: false, message: "" })}
+        >
+          <Pressable
+            style={styles.modalBox}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.errorIconCircle}>
+              <Ionicons name="alert-circle-outline" size={36} color="#fff" />
+            </View>
+
+            <Text style={styles.errorTitle}>Error</Text>
+            <Text style={styles.errorMessage}>{errorModal.message}</Text>
+
+            <TouchableOpacity
+              style={styles.errorButton}
+              onPress={() => setErrorModal({ visible: false, message: "" })}
+            >
+              <Text style={styles.errorButtonText}>Try Again</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
       {/* Top Section */}
       <View style={styles.topSection}>
         <Animated.View
@@ -273,5 +310,67 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
     letterSpacing: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(10, 25, 47, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+
+  modalBox: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 28,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  errorIconCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "#EF4444",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  errorTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#0A2540",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  errorMessage: {
+    fontSize: 15,
+    color: "#64748B",
+    textAlign: "center",
+    lineHeight: 23,
+    marginBottom: 26,
+  },
+  errorButton: {
+    width: "100%",
+    backgroundColor: "#EF4444",
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    shadowColor: "#EF4444",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  errorButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
 });
