@@ -1,9 +1,33 @@
 {
-  "expo": {
-    "name": "MyApp",
-    "slug": "my-app",
-    "android": {
-      "package": "https://bawdicsoft-coral.vercel.app"
+  "cli": {
+    "version": ">= 8.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./service-account-key.json",
+        "track": "internal"
+      }
     }
   }
 }

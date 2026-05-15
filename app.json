@@ -19,18 +19,19 @@
         "monochromeImage": "./assets/logo.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.bawdicsoft"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/logo.png"
+      "favicon": "./assets/logo.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logo.png",
+          "image": "./assets/logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -38,12 +39,17 @@
             "backgroundColor": "#000000"
           }
         }
-      ],
-      "@rnmapbox/maps"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
-    }
+      "reactCompiler": false
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7209bd87-c8a7-46ad-afb5-4ca3a269802f"
+      }
+    },
+    "owner": "unichalo49"
   }
 }

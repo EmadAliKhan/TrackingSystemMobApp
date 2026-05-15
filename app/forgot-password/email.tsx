@@ -227,17 +227,17 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Animated,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Animated,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 export default function EmailScreen() {
@@ -366,8 +366,8 @@ export default function EmailScreen() {
       >
         <Text style={styles.title}>Change Password</Text>
         <Text style={styles.subtitle}>
-          Enter your registered email address below and we'll send you a 6-digit
-          OTP to reset your password.
+          Enter your registered email address below and we&apos;ll send you a
+          6-digit OTP to reset your password.
         </Text>
 
         {/* Email Input */}
